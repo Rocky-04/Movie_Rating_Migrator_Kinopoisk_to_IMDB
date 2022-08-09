@@ -1,4 +1,4 @@
-﻿# Grade converter Kinopoisk -> IMDB
+﻿# Grade converter: Kinopoisk -> IMDB
 
 
 # Программа для скачивания личных оценок с Кинопоиска, а также для переноса оценок с Кинопоиска на IMDB.
