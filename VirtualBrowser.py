@@ -61,7 +61,7 @@ class VirtualBrowser:
             self.parsing_page()
         self.browser.quit()
 
-        file = self.path_file + 'movie_list.xlsx'  # сохраняю оценки в xlsx
+        file = self.path_file + '/movie_list.xlsx'  # сохраняю оценки в xlsx
         with open(file, 'w') as xlsx:
             data = pd.DataFrame(self.d)
         data.to_excel(file)
@@ -74,7 +74,7 @@ class VirtualBrowser:
             mov_dict[self.id_kinopoisk[i]]['id_imdb'] = self.id_imdb[i]
             mov_dict[self.id_kinopoisk[i]]['name_movie_rus'] = self.name_movie_rus[i]
 
-        file = self.path_file + 'mov_dict.json'  # сохраняю оценки в json
+        file = self.path_file + '/mov_dict.json'  # сохраняю оценки в json
         with open(file, 'w', encoding="utf-8") as f:
             json.dump(mov_dict, f, indent=3, ensure_ascii=False)
             print('Файл успешно сохранен в формате json')

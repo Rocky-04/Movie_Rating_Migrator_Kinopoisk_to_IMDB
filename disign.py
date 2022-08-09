@@ -150,6 +150,9 @@ class Ui_MainWindow(object):
     def func_send_path(self):
         """Передает путь для сохранения файлов"""
         self.path_file = QFileDialog.getExistingDirectory()
+        if self.path_file.endswith('/'):
+            self.path_file = self.path_file[0:-1]
+        print(self.path_file)
         if len(self.path_file) > 0:
             self.button_send_path.setStyleSheet("background-color: rgb(80, 255, 115);\n"
                                                 "color: rgb(0, 0, 0);\n")
