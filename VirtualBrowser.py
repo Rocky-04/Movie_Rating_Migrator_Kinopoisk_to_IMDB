@@ -238,7 +238,7 @@ class VirtualBrowser:
 
         # создаем файл с ошибками
         if len(errors) > 0:
-            file = self.path_file + 'errors.xlsx'  # сохраняю оценки в xlsx
+            file = self.path_file + '/errors.xlsx'  # сохраняю оценки в xlsx
             with open(file, 'w') as xlsx:
                 data = pd.DataFrame(errors)
             data.to_excel(file)
