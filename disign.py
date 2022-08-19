@@ -1,3 +1,5 @@
+import json
+
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
@@ -21,7 +23,7 @@ class Ui_MainWindow(object):
         MainWindow.setMouseTracking(False)
         MainWindow.setStyleSheet("color: rgb(180, 142, 255);\n"
                                  "selection-background-color: rgb(221, 221, 221);")
-        MainWindow.setWindowIcon(QtGui.QIcon('Movie_Studio_30032.ico'))
+        MainWindow.setWindowIcon(QtGui.QIcon('icon.ico'))
         MainWindow.setIconSize(QtCore.QSize(100, 100))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setStyleSheet("background-color: rgb(230, 230, 230);\n"
@@ -102,14 +104,24 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
         self.add_func()
+        self.print_massage(
+            'Для корректной работы понадобиться установленный браузер Google Chrome версии 104, а также VPN если без него не работает Кинопоиск')
 
+    def print_massage(self, text, side='massage'):
+        """
+        Выводит текст пользователю.
+        side = 'massage' or 'error'
+        """
         massage = QMessageBox()
-        massage.setWindowTitle('Важно!')
-        massage.setText(
-            '''Для корректной работы понадобиться установленный браузер Google Chrome версии 103, а также VPN если без него не работает Кинопоиск''')
-        massage.setIcon(QMessageBox.Information)
+        if side == 'error':
+            massage.setWindowTitle('Ошибка')
+            massage.setIcon(QMessageBox.Warning)
+        else:
+            massage.setWindowTitle('Важно!')
+            massage.setIcon(QMessageBox.Information)
+        massage.setText(text)
         massage.setStandardButtons(QMessageBox.Ok)
-        massage.setWindowIcon(QtGui.QIcon('Movie_Studio_30032.ico'))
+        massage.setWindowIcon(QtGui.QIcon('icon.ico'))
         massage.exec_()
 
     def retranslateUi(self, MainWindow):
@@ -131,11 +143,8 @@ class Ui_MainWindow(object):
     def func_send_id(self):
         """Передает ID Кинопоиска"""
         a = self.plainTextEdit.toPlainText()
-        error = QMessageBox()
-        error.setWindowTitle('Ошибка')
-        error.setText("Некоректный ID, он должен состоять только из цифр")
-        error.setIcon(QMessageBox.Warning)
-        error.setStandardButtons(QMessageBox.Ok)
+        text = "Некоректный ID, он должен состоять только из цифр"
+
         if 2 < len(a) < 20:
             try:
                 int(a)
@@ -143,16 +152,15 @@ class Ui_MainWindow(object):
                 self.button_send_path_2.setStyleSheet("background-color: rgb(80, 255, 115);\n"
                                                       "color: rgb(0, 0, 0);\n")
             except:
-                error.exec_()
+                self.print_massage(text=text, side='error')
         else:
-            error.exec_()
+            self.print_massage(text=text, side='error')
 
     def func_send_path(self):
         """Передает путь для сохранения файлов"""
         self.path_file = QFileDialog.getExistingDirectory()
         if self.path_file.endswith('/'):
             self.path_file = self.path_file[0:-1]
-        print(self.path_file)
         if len(self.path_file) > 0:
             self.button_send_path.setStyleSheet("background-color: rgb(80, 255, 115);\n"
                                                 "color: rgb(0, 0, 0);\n")
@@ -160,22 +168,12 @@ class Ui_MainWindow(object):
     def func_start_download(self, user_id=None, path_file=None):
         """Парсинг Кинопоиска"""
         if user_id == None or path_file == None:
-            error = QMessageBox()
-            error.setWindowTitle('Errors')
-            error.setText('Не указан путь для сохранения или ID')
-            error.setIcon(QMessageBox.Warning)
-            error.setStandardButtons(QMessageBox.Ok)
-            error.exec_()
+            text = "Не указан путь для сохранения или ID"
+            self.print_massage(text=text, side='error')
+
         else:
-            massage = QMessageBox()
-            massage.setWindowTitle('Важно!')
-            massage.setText(
-                f'Для парсинга Ваших оценок с Кинопоиска, возможно понадобиться пройти проверку на то что вы человек. '
-                f'Не закрывайте открытый браузер программой!')
-            massage.setIcon(QMessageBox.Information)
-            massage.setStandardButtons(QMessageBox.Ok)
-            massage.setWindowIcon(QtGui.QIcon('Movie_Studio_30032.ico'))
-            massage.exec_()
+            text = f'''Для парсинга Ваших оценок с Кинопоиска, возможно понадобиться пройти проверку на то что вы человек. Не закрывайте открытый браузер программой!'''
+            self.print_massage(text)
 
             for i in range(3):
                 flag = False
@@ -188,54 +186,55 @@ class Ui_MainWindow(object):
                     print(e)
                     continue
             if flag == True:
-                massage = QMessageBox()
-                massage.setWindowTitle('Парсинг завершен')
-                massage.setText(f'Парсинг успешно завершен. Файлы сохранены в папку {path_file}')
-                massage.setIcon(QMessageBox.Information)
-                massage.setStandardButtons(QMessageBox.Ok)
-                massage.setWindowIcon(QtGui.QIcon('Movie_Studio_30032.ico'))
-                massage.exec_()
+                text = f'''Парсинг успешно завершен. Файлы сохранены в папку {path_file}'''
+                self.print_massage(text)
+
             else:
-                error = QMessageBox()
-                error.setWindowTitle('Errors')
-                error.setText(
-                    '''Произошла ошибка при парсинге данных. Проверьте открываться ли у Вас сайт Кинопоиска, возможно нужен VPN. Проверьте правильность ID. Попробуйте позже, если опять будет ошибка напишите в тех. поддержку - rocky01396@gmail.com''')
-                error.setIcon(QMessageBox.Warning)
-                error.setStandardButtons(QMessageBox.Ok)
-                error.exec_()
+                text = """Произошла ошибка при парсинге данных. Проверьте открываться ли у Вас сайт Кинопоиска, возможно нужен VPN. Проверьте правильность ID. Попробуйте позже, если опять будет ошибка напишите в тех. поддержку - rocky01396@gmail.com"""
+                self.print_massage(text=text, side='error')
 
     def func_start_rate(self, user_id, path_file):
         """Проставляет оценки на IMDB"""
-        self.func_start_download(user_id, path_file)
-
-        massage = QMessageBox()
-        massage.setWindowTitle('Важно!')
-        massage.setText(
-            """Для проставления оценок на Ваш IMDB, понадобиться пройти авторизацию на сайте. Сам процесс занимает время, так как каждый фильм проставляется отдельно. В среднем на один фильм уходит 3 сек, 1000 фильмов займет около 50 мин. Не закрывайте открытый браузер программой, можете его свернуть :-)""")
-        massage.setIcon(QMessageBox.Information)
-        massage.setStandardButtons(QMessageBox.Ok)
-        massage.setWindowIcon(QtGui.QIcon('Movie_Studio_30032.ico'))
-        massage.exec_()
         try:
-            a = VirtualBrowser(user_id, path_file)
-            a.start_rate_imdb()
+            with open(self.path_file + '/mov_dict.json', 'r', encoding='utf-8') as file:
+                file = json.load(file)
+                for n, i in enumerate(file):
+                    continue
 
-            massage = QMessageBox()
-            massage.setWindowTitle('Оценки проставлены')
-            massage.setText(f'Файл с ошибками (если они были) сохранен в папку {path_file}')
-            massage.setWindowIcon(QtGui.QIcon('Movie_Studio_30032.ico'))
-            massage.setIcon(QMessageBox.Information)
-            massage.setStandardButtons(QMessageBox.Ok)
-            massage.exec_()
-        except Exception as e:
-            print(e)
-            error = QMessageBox()
-            error.setWindowTitle('Errors')
-            error.setText(
-                '''Произошла ошибка при проставлении оценок. Попробуйте позже, если опять будет ошибка напишите в тех. поддержку - rocky01396@gmail.com''')
-            error.setIcon(QMessageBox.Warning)
-            error.setStandardButtons(QMessageBox.Ok)
-            error.exec_()
+                def popup_clicked(i):
+
+                    if 'No' in i.text():
+                        self.func_start_download(user_id, path_file)
+
+                massage = QMessageBox()
+                massage.setWindowTitle('Важно!')
+                massage.setText(
+                    f'''Найден файл с оценками, в котором {n} оценок. Если вы уже начинали проставлять оценки, они продолжат проставляться с места последней остановки. Желаете использовать этот файл? Если ответите NO, оценки будут скачаны заново с Кинопоиск и проставляться тоже будут заново''')
+                massage.setIcon(QMessageBox.Question)
+                massage.setWindowIcon(QtGui.QIcon('icon.ico'))
+                massage.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                massage.buttonClicked.connect(popup_clicked)
+                massage.exec_()
+
+
+        except:
+            self.func_start_download(user_id, path_file)
+
+        finally:
+            text = f"""Для проставления оценок на Ваш IMDB, понадобиться пройти авторизацию на сайте. Сам процесс занимает время, так как каждый фильм проставляется отдельно. В среднем на один фильм уходит 3 сек, 1000 фильмов займет около 50 мин:-)"""
+            self.print_massage(text)
+
+            try:
+                a = VirtualBrowser(user_id, path_file)
+                a.start_rate_imdb()
+
+                text = f"""Файл с ошибками (если они были) сохранен в папку {path_file}"""
+                self.print_massage(text)
+
+            except Exception as e:
+                print(e)
+                text = "Произошла ошибка при проставлении оценок. Попробуйте позже, если опять будет ошибка напишите в тех. поддержку - rocky01396@gmail.com"
+                self.print_massage(text=text, side='error')
 
 
 if __name__ == "__main__":

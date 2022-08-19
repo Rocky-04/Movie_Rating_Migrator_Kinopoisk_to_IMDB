@@ -12,6 +12,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait as wait
 
+from keys_api import keys_kinopoisk_api_unofficial
+
 
 class VirtualBrowser:
     def __init__(self, user_id, path_file=''):
@@ -19,7 +21,8 @@ class VirtualBrowser:
         self.path_file = path_file
 
     def start_parsing(self):
-        'Парсинг оценок пользователя в EXCEL, Json'
+        'Запуск парсинга оценок пользователя в EXCEL, Json'
+
         self.name_movie_rus = []
         self.name_movie = []
         self.my_grade = []
@@ -38,7 +41,7 @@ class VirtualBrowser:
                   "id_imdb": self.id_imdb}
 
         self.start_browser_kinopoisk()
-        self.top_movies = self.read_file('tom_movies_20000.json')
+        self.top_movies = self.read_file('top_movies_25000.json')
 
         soup = BeautifulSoup(self.browser.page_source, 'lxml')
         a = int(soup.find('div', class_='pagesFromTo').text.split(' из ')[1])  # узнаем сколько оценок
@@ -81,23 +84,70 @@ class VirtualBrowser:
 
     def start_browser_kinopoisk(self):
         """Запускаю браузер для парсинга с кинопоиска"""
-        self.browser = Chrome('chrome/chromedriver.exe')
-        self.browser.get(f'https://www.kinopoisk.ru/user/{self.user_id}/votes/list/ord/date/perpage/200/page/1/#list')
 
-        # Загружем куки
-        for cookie in pickle.load(open('chrome/session', 'rb')):
-            self.browser.add_cookie(cookie)
         url = f'https://www.kinopoisk.ru/user/{self.user_id}/votes/list/ord/date/perpage/200/page/1/#list'
+        options = webdriver.ChromeOptions()
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-gpu')
+        options.add_experimental_option('excludeSwitches', ['enable-logging'])
+        options.add_argument('--log-level=3')
+        options.add_argument('start-maximized')
+        options.add_argument('--disable-infobars')
+        options.add_argument("--disable-extensions")
+        self.browser = Chrome('chromedriver.exe', options=options)
         self.browser.get(url)
 
-    def read_file(self, file: str):
+        # Загружем куки
+        for cookie in pickle.load(open('session_kinopoisk', 'rb')):
+            self.browser.add_cookie(cookie)
+        self.browser.get(url)
+
+
+
+    def start_browser_imdb(self):
+        """Запускаю браузер для IMDB"""
+
+        self.browser = Chrome('chromedriver.exe')
+        # Переходим на страницу авторизации
+        self.browser.get(f'https://www.imdb.com/registration/signin?ref=nv_generic_lgin&u=%2F')
+        # Ждем авторизацию пользователя
+        wait(self.browser, 600).until(EC.url_contains('https://www.imdb.com/?ref_=login'))
+        # Получаю куки для авторизации
+        pickle.dump(self.browser.get_cookies(), open('session_imdb', 'wb'))
+        # Запускаю браузер с настройками и куками
+        options = webdriver.ChromeOptions()
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--disable-setuid-sandbox")
+        options.add_argument("--disable-webgl")
+        options.add_argument("--disable-popup-blocking")
+        options.add_argument("--disable-xss-auditor")
+        options.add_argument("--disable-web-security")
+        options.add_argument('--ignore-certificate-errors')
+        options.add_experimental_option('excludeSwitches', ['enable-logging'])
+        options.add_argument('--log-level=3')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--disable-infobars')
+        options.add_argument("--disable-extensions")
+        prefs = {"profile.managed_default_content_settings.images": 2}
+        options.add_experimental_option("prefs", prefs)
+        options.headless = True
+        options.add_argument("--window-size=1400,1000")
+        self.browser = Chrome('chromedriver.exe', options=options)
+        self.browser.get('https://www.imdb.com')
+
+        for cookie in pickle.load(open('session_imdb', 'rb')):
+            self.browser.add_cookie(cookie)
+
+    def read_file(self, file: str) -> dict:
         """Считываю содержимое файла"""
         with open(file, 'r', encoding="utf-8") as json_file:
             movies = json.load(json_file)
             return movies
 
     @staticmethod
-    def examination_count_grade(a: list):
+    def examination_count_grade(a: list) -> str:
         """Удаление лишних символов и преобразование  к верному формату"""
         num = ''
         a = ''.join(a)
@@ -145,21 +195,9 @@ class VirtualBrowser:
             except:
                 self.rating_kinopoisk.append(None)
 
-    def start_api(self, id):
+    def start_api(self, id) -> dict or none:
         """Получаем данные с апи kinopoiskapiunofficial"""
-        key_lst = ['3cdf0f0f-62f5-4840-b0d6-3f0a047f3dcb', '44535d0b-6460-4480-ab4c-c4ff53dbccf0',
-                   'ba6a0687-09dd-4268-8d23-c91114f82203', 'bd698eba-576a-4145-9fa1-4be16d8f9d74',
-                   '472717ab-55ca-4a8f-b486-c6d2ba55ddda', '777397b3-cc2b-4fc0-b2f2-4116b03d95f8',
-                   'cddbfaa8-b837-443f-9b49-d162995a8c7d', '768ddd36-3b0f-47fb-a0a2-9640319aa036',
-                   '32a98d34-bcdd-42d0-83d2-71c30b5dab4c', '586676af-5bf9-4dd8-8502-c835ac8631fe',
-                   '08016bb5-85ae-4aab-a996-346c12e86aea', '57f12959-9b65-4e99-a6d2-7368dfb64730',
-                   'd6728934-78a0-478c-a081-912b88bec29b', 'c2b1b8ce-e802-4ebb-9fd7-38a36af09bca',
-                   '3b44f759-0a94-4ae9-bc04-d23a3a29c461', 'b7541a2e-edfc-4baa-a870-9ba17f9a52ae',
-                   'cae6b836-a4d9-43a7-bb9b-0e1a7042d5e8', 'f3763ff7-d47e-4550-ac98-fa007e6dd51e',
-                   'd67d88a1-6e2d-4497-8c60-2bfefd96f358', '4f358e01-8636-4b70-b63d-d76a42451269',
-                   '6294d1a3-c7e6-4de8-9cef-2c60bcdd0af0', 'f25a63cf-cd08-4a3b-be19-69c858dd6042',
-                   'a951732e-564e-44e0-be11-c82ee1e79a8a', '127cf83f-2fd9-4699-a70a-7e023ea26c6b',
-                   'e2465028-4dee-4e58-915d-f468cda96210']
+        key_lst = keys_kinopoisk_api_unofficial
         count_key = 0
         while True:
             try:
@@ -184,7 +222,7 @@ class VirtualBrowser:
                 print(e)
                 return None
 
-    def start_api_kinobd(self, id):
+    def start_api_kinobd(self, id) -> dict or none:
         """Получаем данные с апи kinobd.net"""
         try:
             api = requests.get(f'https://kinobd.net/api/films/search/kp_id?q={id}', headers={'User-Agent': 'Rock'})
@@ -199,26 +237,14 @@ class VirtualBrowser:
         # Создаем файл для фильмов которым не удалось проставить оценки
         errors = []
         movies = self.read_file(self.path_file + '/mov_dict.json')
-        # Запускаю браузер
-        self.browser = Chrome('chrome/chromedriver.exe')
-        # Переходим на страницу авторизации
-        self.browser.get(f'https://www.imdb.com/registration/signin?ref=nv_generic_lgin&u=%2F')
-        # Ждем авторизацию пользователя
-        wait(self.browser, 600).until(EC.url_contains('https://www.imdb.com/?ref_=login'))
-        # Получаю куки для авторизации
-        pickle.dump(self.browser.get_cookies(), open('chrome//session_imdb', 'wb'))
-        # Запускаю браузер с настройками и куками
-        options = webdriver.ChromeOptions()
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        prefs = {"profile.managed_default_content_settings.images": 2}
-        options.add_experimental_option("prefs", prefs)
-        self.browser = Chrome('chrome/chromedriver.exe', options=options)
-        self.browser.get('https://www.imdb.com')
-        for cookie in pickle.load(open('chrome\\session_imdb', 'rb')):
-            self.browser.add_cookie(cookie)
+
+        self.start_browser_imdb()
 
         # Проставляем оценки
+        print('Начинаю проставлять оценки...')
         for movie in movies:
+            if 'success' in movies[movie]:
+                continue
             try:
                 if movies[movie]['id_imdb'] == None:
                     errors.append(
@@ -230,6 +256,12 @@ class VirtualBrowser:
                         errors.append(
                             [movie, movies[movie]['name_movie_rus'], f"должна быть оценка {movies[movie]['my_grade']}",
                              f'https://www.imdb.com//title//{movies[movie]["id_imdb"]}'])
+                    if answer == True:
+                        movies[movie]['success'] = True
+                        print(
+                            f"{movies[movie]['name_movie_rus']}- успешно проставлена оценка: {movies[movie]['my_grade']}")
+                        with open(self.path_file + '/mov_dict.json', 'w', encoding='utf-8') as file:
+                            json.dump(movies, file, indent=3, ensure_ascii=False)
             except Exception as e:
                 print(e, movies[movie]['name_movie_rus'])
                 errors.append(
@@ -246,7 +278,7 @@ class VirtualBrowser:
 
         self.browser.quit()
 
-    def rate_id_imdb(self, film, grade):
+    def rate_id_imdb(self, film, grade) -> bool:
         """Поставить оценку фильму на imdb
         Возвращает True если оценка успешно проставлена"""
 
@@ -260,7 +292,7 @@ class VirtualBrowser:
             print(e)
             print(f'{film} - не удалось получить Веб страницу')
         time.sleep(1)
-        try: #Проверка: стоит ли уже верная оценка
+        try:  # Проверка: стоит ли уже верная оценка
             if browser.find_element(By.XPATH,
                                     '/html/body/div[2]/main/div/section[1]/section/div[3]/section/section/div[2]/div[2]/div/div[2]/button/div/div/div[2]/div/span').text == grade:
                 browser.close()
@@ -268,7 +300,7 @@ class VirtualBrowser:
                 return answer
         except:
             answer = False
-        try: #Ставим оценку
+        try:  # Ставим оценку
 
             browser.find_element(By.XPATH,
                                  '/html/body/div[2]/main/div/section[1]/section/div[3]/section/section/div[2]/div[2]/div/div[2]/button').click()
