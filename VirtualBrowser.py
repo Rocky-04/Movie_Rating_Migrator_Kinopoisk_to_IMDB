@@ -103,8 +103,6 @@ class VirtualBrowser:
             self.browser.add_cookie(cookie)
         self.browser.get(url)
 
-
-
     def start_browser_imdb(self):
         """Запускаю браузер для IMDB"""
 
@@ -144,6 +142,7 @@ class VirtualBrowser:
         """Считываю содержимое файла"""
         with open(file, 'r', encoding="utf-8") as json_file:
             movies = json.load(json_file)
+            movies = dict(reversed(list(movies.items())))
             return movies
 
     @staticmethod

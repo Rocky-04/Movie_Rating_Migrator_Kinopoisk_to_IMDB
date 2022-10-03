@@ -105,7 +105,7 @@ class Ui_MainWindow(object):
 
         self.add_func()
         self.print_massage(
-            'Для корректной работы понадобиться установленный браузер Google Chrome версии 104, а также VPN если без него не работает Кинопоиск')
+            'Для корректной работы понадобиться установленный браузер Google Chrome версии 106, но можете попробовать и на другой версии Chrome. Также VPN если без него не работает Кинопоиск')
 
     def print_massage(self, text, side='massage'):
         """
