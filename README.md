@@ -2,9 +2,9 @@
 
 
 # Программа для скачивания личных оценок с Кинопоиска, а также для переноса оценок с Кинопоиска на IMDB.
-<p class="aligncenter">
+
 <a href="https://imgbb.com/"><img src="https://i.ibb.co/R9XL3F3/Screenshot-41.png" alt="Screenshot-41" border="0"></a>
-</p>
+
 # Для использования программы:
 ### 1) скачайте файл - "Grade converter.rar", и распакуйте его
 ### 2) запустите файл - "disign.exe"
