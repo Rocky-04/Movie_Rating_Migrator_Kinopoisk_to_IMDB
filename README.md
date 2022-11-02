@@ -4,7 +4,7 @@
 # Программа для скачивания личных оценок с Кинопоиска, а также для переноса оценок с Кинопоиска на IMDB.
 
 <p align="center">
-  <img width="460" height="300" src="https://i.ibb.co/R9XL3F3/Screenshot-41.png" alt="Screenshot-41">
+  <img  src="https://i.ibb.co/R9XL3F3/Screenshot-41.png" alt="Screenshot-41">
 </p>
 
 
