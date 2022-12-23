@@ -44,7 +44,8 @@ class VirtualBrowser:
         self.top_movies = self.read_file('../data/top_movies_25000.json')
 
         soup = BeautifulSoup(self.browser.page_source, 'lxml')
-        a = int(soup.find('div', class_='pagesFromTo').text.split(' из ')[1])  # узнаем сколько оценок
+        a = int(
+            soup.find('div', class_='pagesFromTo').text.split(' из ')[1])  # узнаем сколько оценок
         for i in range(1, (a // 200) + 2):  # Парсим оценки
             try:
                 url = f'https://www.kinopoisk.ru/user/{self.user_id}/votes/list/ord/date/page/{i}/#list'
@@ -164,9 +165,11 @@ class VirtualBrowser:
         films = soup.find('div', class_='profileFilmsList').findAll('div', class_='item')
         for film in films:
             # try:
-            self.name_movie.append(film.find('div', class_='info').find('div', class_='nameEng').text)
+            self.name_movie.append(
+                film.find('div', class_='info').find('div', class_='nameEng').text)
             self.my_grade.append(film.find('div', class_='vote').text)
-            self.count_grey.append(self.examination_count_grade(film.find('div', class_='rating').text.strip()))
+            self.count_grey.append(
+                self.examination_count_grade(film.find('div', class_='rating').text.strip()))
             n = str(film.find('div', class_='info').find('div', class_='nameRus').text)
             self.name_movie_rus.append(n[:n.find('(')])
             self.week.append(n[-5:-1:1])
@@ -226,7 +229,8 @@ class VirtualBrowser:
     def start_api_kinobd(self, id) -> dict or none:
         """Получаем данные с апи kinobd.net"""
         try:
-            api = requests.get(f'https://kinobd.net/api/films/search/kp_id?q={id}', headers={'User-Agent': 'Rock'})
+            api = requests.get(f'https://kinobd.net/api/films/search/kp_id?q={id}',
+                               headers={'User-Agent': 'Rock'})
             api = json.loads(api.content.decode('utf-8'))
             return api
         except Exception as e:
@@ -249,13 +253,15 @@ class VirtualBrowser:
             try:
                 if movies[movie]['id_imdb'] == None:
                     errors.append(
-                        [movie, movies[movie]['name_movie_rus'], f"должна быть оценка {movies[movie]['my_grade']}",
+                        [movie, movies[movie]['name_movie_rus'],
+                         f"должна быть оценка {movies[movie]['my_grade']}",
                          f'Не найдено соответствие фильма на IMDB'])
                 else:
                     answer = self.rate_id_imdb(movies[movie]['id_imdb'], movies[movie]['my_grade'])
                     if answer == False:
                         errors.append(
-                            [movie, movies[movie]['name_movie_rus'], f"должна быть оценка {movies[movie]['my_grade']}",
+                            [movie, movies[movie]['name_movie_rus'],
+                             f"должна быть оценка {movies[movie]['my_grade']}",
                              f'https://www.imdb.com//title//{movies[movie]["id_imdb"]}'])
                     if answer == True:
                         movies[movie]['success'] = True
@@ -266,7 +272,8 @@ class VirtualBrowser:
             except Exception as e:
                 print(e, movies[movie]['name_movie_rus'])
                 errors.append(
-                    [movie, movies[movie]['name_movie_rus'], f"должна быть оценка {movies[movie]['my_grade']}",
+                    [movie, movies[movie]['name_movie_rus'],
+                     f"должна быть оценка {movies[movie]['my_grade']}",
                      f'https://www.imdb.com//title//{movies[movie]["id_imdb"]}'])
 
         # создаем файл с ошибками
@@ -309,12 +316,14 @@ class VirtualBrowser:
             element = browser.find_element(By.XPATH,
                                            f'/html/body/div[4]/div[2]/div/div[2]/div/div[2]/div[2]/div/div[2]/button[{grade}]')
             ActionChains(browser).move_to_element(element).click().perform()
-            browser.find_element(By.XPATH, '/html/body/div[4]/div[2]/div/div[2]/div/div[2]/div[2]/button').click()
+            browser.find_element(By.XPATH,
+                                 '/html/body/div[4]/div[2]/div/div[2]/div/div[2]/div[2]/button').click()
             time.sleep(1)
             answer = True if browser.find_element(By.XPATH,
                                                   '/html/body/div[2]/main/div/section[1]/section/div[3]/section/section/div[2]/div[2]/div/div[2]/button/div/div/div[2]/div/span').text == grade else False
         except:
-            print(f'{"https:/www.imdb.com/title/" + film} - возможно произошла ошибка. Должна быть оценка {grade}')
+            print(
+                f'{"https:/www.imdb.com/title/" + film} - возможно произошла ошибка. Должна быть оценка {grade}')
             answer = False
         browser.close()
         browser.switch_to.window(browser.window_handles[0])

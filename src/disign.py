@@ -4,6 +4,7 @@ import os
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
+from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QMessageBox
@@ -17,6 +18,7 @@ class UiMainWindow(object):
         # Initialize instance variables
         self.user_id = None
         self.path_file = None
+        self.timer = 60000  # 60 sec
 
     def setup_ui(self, main_window: QMainWindow) -> None:
         """
@@ -189,6 +191,7 @@ class UiMainWindow(object):
     def print_massage(self, text: str, side: str = 'massage') -> None:
         """
         Displays a message to the user.
+        A timer is used to close the message box after a certain period of time.
 
         text (str): The message to be displayed.
         message_type (str, optional): The type of message. Can be 'message' or 'error'.
@@ -204,7 +207,13 @@ class UiMainWindow(object):
         massage.setText(text)
         massage.setStandardButtons(QMessageBox.Ok)
         massage.setWindowIcon(QtGui.QIcon('../img/icon.ico'))
+        timer = QTimer(massage)
+        timer.setInterval(self.timer)
+        timer.setSingleShot(True)
+        timer.timeout.connect(massage.accept)
+        timer.start()
         massage.exec_()
+        self.massage = massage
 
     def connect_slots(self) -> None:
         """
@@ -290,7 +299,7 @@ class UiMainWindow(object):
                 'проверку на то что вы человек. Не закрывайте открытый браузер программой!')
         self.print_massage(text)
 
-        for i in range(3):
+        for _ in range(3):
             try:
                 browser = VirtualBrowser(user_id, path_file)
                 browser.start_parsing()
@@ -325,8 +334,8 @@ class UiMainWindow(object):
         if os.path.exists(path):
             # If file exists, open it and count the number of ratings
             with open(path, 'r', encoding='utf-8') as file:
-                file = json.load(file)
-                rating_count = len(file)
+                data = json.load(file)
+                rating_count = len(data)
 
             self.show_rating_popup(rating_count)
 
