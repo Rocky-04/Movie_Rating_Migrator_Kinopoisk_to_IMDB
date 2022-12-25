@@ -153,21 +153,6 @@ class UiMainWindow(object):
         self.button_send_path.setObjectName("button_send_path")
         self.button_send_path.setText("Укажите путь для сохранения файла:")
 
-    def setup_plain_text_edit(self, central_widget: QWidget) -> None:
-        """
-        Setup the plain text edit widget.
-
-        Parameters:
-        central_widget (QWidget): The central widget object.
-        """
-        self.plain_text_edit = QtWidgets.QPlainTextEdit(central_widget)
-        self.plain_text_edit.setGeometry(QtCore.QRect(20, 150, 450, 40))
-        self.plain_text_edit.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-                                           "color: rgb(2, 2, 2);\n"
-                                           "font: 12pt;\n"
-                                           "")
-        self.plain_text_edit.setObjectName("plain_text_edit")
-
     def setup_button_enter_id(self, central_widget: QWidget) -> None:
         """
         Setup the enter ID button.
@@ -187,6 +172,21 @@ class UiMainWindow(object):
                                            "")
         self.button_enter_id.setObjectName("button_enter_id")
         self.button_enter_id.setText("Нажмите когда укажите ID")
+
+    def setup_plain_text_edit(self, central_widget: QWidget) -> None:
+        """
+        Setup the plain text edit widget.
+
+        Parameters:
+        central_widget (QWidget): The central widget object.
+        """
+        self.plain_text_edit = QtWidgets.QPlainTextEdit(central_widget)
+        self.plain_text_edit.setGeometry(QtCore.QRect(20, 150, 450, 40))
+        self.plain_text_edit.setStyleSheet("background-color: rgb(255, 255, 255);\n"
+                                           "color: rgb(2, 2, 2);\n"
+                                           "font: 12pt;\n"
+                                           "")
+        self.plain_text_edit.setObjectName("plain_text_edit")
 
     def print_massage(self, text: str, side: str = 'massage') -> None:
         """
@@ -219,10 +219,10 @@ class UiMainWindow(object):
         """
         Connect the signals and slots of the user interface.
         """
-        self.button_download.clicked.connect(lambda: self.start_parsing())
-        self.button_enter_id.clicked.connect(lambda: self.send_user_id())
-        self.button_send_path.clicked.connect(lambda: self.select_save_path())
-        self.button_rate.clicked.connect(lambda: self.rate_movies_on_imdb())
+        self.button_download.clicked.connect(self.start_parsing)
+        self.button_enter_id.clicked.connect(self.send_user_id)
+        self.button_send_path.clicked.connect(self.select_save_path)
+        self.button_rate.clicked.connect(self.rate_movies_on_imdb)
 
     def send_user_id(self) -> None:
         """
@@ -235,7 +235,7 @@ class UiMainWindow(object):
         """
         user_input = self.plain_text_edit.toPlainText()
         min_length = 2
-        max_length = 20
+        max_length = 15
         error_message = (
             f"Некоректный ID, он должен состоять только из цифр "
             f"и иметь длину от {min_length} до {max_length} символов"
@@ -249,7 +249,7 @@ class UiMainWindow(object):
             self.print_massage(text=error_message, side="error")
             return
         try:
-            if min_length <= len(user_input) <= max_length:
+            if min_length <= len(user_input) <= max_length and user_input[0] != '0':
                 self.user_id = int(user_input)
                 self.button_enter_id.setStyleSheet("background-color: rgb(80, 255, 115);\n"
                                                    "color: rgb(0, 0, 0);\n")
@@ -268,11 +268,12 @@ class UiMainWindow(object):
         If a path is selected, changes the color of the button_send_path button.
         """
         path = QFileDialog.getExistingDirectory()
-        if len(path) > 0:
+        if len(path) > 0 and not path.isdigit():
             self.button_send_path.setStyleSheet("background-color: rgb(80, 255, 115);\n"
                                                 "color: rgb(0, 0, 0);\n")
         else:
             self.print_massage('Не выбран путь для сохранения файла')
+            return
         if path.endswith('/'):
             path = path[0:-1]
         self.path_file = path
@@ -330,7 +331,7 @@ class UiMainWindow(object):
         path_file = self.path_file
 
         # Check if mov_dict.json file exists
-        path = path_file + '/mov_dict.json'
+        path = str(path_file) + '/mov_dict.json'
         if os.path.exists(path):
             # If file exists, open it and count the number of ratings
             with open(path, 'r', encoding='utf-8') as file:
@@ -379,7 +380,7 @@ class UiMainWindow(object):
 
         massage = QMessageBox()
         massage.setWindowTitle('Important')
-        text = f'Найден файл с оценками, в котором {rating_count} оценок.' + (
+        text = f'Найден файл с оценками, в котором {rating_count} оценок. ' + (
             "Если вы уже начинали проставлять оценки, они продолжат проставляться с места "
             "последней остановки. Желаете использовать этот файл? Если ответите NO, "
             "оценки будут скачаны заново с Кинопоиск и проставляться тоже будут заново")
