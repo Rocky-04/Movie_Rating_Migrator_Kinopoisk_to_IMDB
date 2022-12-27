@@ -233,23 +233,23 @@ def test_setup_button_download_has_correct_style_sheet(qtbot):
                                                'rgb(221, 221, 221);')
 
 
-def test_print_massage_sets_window_title_correctly_on_error(qtbot_for_test_massage):
-    ui = qtbot_for_test_massage
+def test_print_massage_sets_window_title_correctly_on_error(launch_for_test_massage):
+    ui = launch_for_test_massage
     assert ui.massage.windowTitle() == 'Error'
 
 
-def test_print_massage_sets_icon_correctly_on_error(qtbot_for_test_massage):
-    ui = qtbot_for_test_massage
+def test_print_massage_sets_icon_correctly_on_error(launch_for_test_massage):
+    ui = launch_for_test_massage
     assert ui.massage.icon() == QMessageBox.Warning
 
 
-def test_print_massage_sets_text_correctly(qtbot_for_test_massage):
-    ui = qtbot_for_test_massage
+def test_print_massage_sets_text_correctly(launch_for_test_massage):
+    ui = launch_for_test_massage
     assert ui.massage.text() == 'This is an error message'
 
 
-def test_print_massage_sets_standard_buttons_correctly(qtbot_for_test_massage):
-    ui = qtbot_for_test_massage
+def test_print_massage_sets_standard_buttons_correctly(launch_for_test_massage):
+    ui = launch_for_test_massage
     assert ui.massage.standardButtons() == QMessageBox.Ok
 
 
@@ -301,21 +301,6 @@ def test_connect_button_enter_id(qtbot):
     assert function_call_count == 1
 
 
-def test_connect_button_send_path(qtbot):
-    ui, main_window, qtbot = qtbot
-    function_call_count = 0
-
-    def count_function_calls():
-        """Function that increments the counter variable each time it is called."""
-        nonlocal function_call_count
-        function_call_count += 1
-
-    ui.button_send_path.clicked.connect(count_function_calls)
-    qtbot.mouseClick(ui.button_send_path, QtCore.Qt.LeftButton)
-
-    assert function_call_count == 1
-
-
 @pytest.mark.parametrize('user_id, result', [
     (252, True),
     ('fs', False),
@@ -355,23 +340,36 @@ def test_select_save_path(qtbot, monkeypatch, path_file, result):
         assert ui.path_file is None
 
 
-@pytest.mark.parametrize('path_file, user_id, result', [
-    ('555', '', 0),
-    ('', 'path', 0),
-    ('5555', 'path', 1),
+@pytest.mark.parametrize('user_id, path_file, result', [
+    ('555', '', False),
+    ('', 'path', False),
+    ('5555', 'path', True),
 ])
 def test_start_parsing(qtbot, monkeypatch, path_file, user_id, result):
     ui, main_window, qtbot = qtbot
+    monkeypatch.setattr(VirtualBrowser, "start_parsing", lambda *args, **kwargs: result)
+
     ui.path_file = path_file
     ui.user_id = user_id
-    function_call_count = 0
 
-    def count_function_calls():
-        """Function that increments the counter variable each time it is called."""
-        nonlocal function_call_count
-        function_call_count += 1
-
-    monkeypatch.setattr(VirtualBrowser, "start_parsing", count_function_calls)
     qtbot.mouseClick(ui.button_download, QtCore.Qt.LeftButton)
 
-    assert function_call_count == result
+    assert hasattr(ui, 'browser') == result
+
+
+@pytest.mark.parametrize('user_id, path_file, result', [
+    ('555', '', False),
+    ('', 'path', False),
+    ('5555', 'path', True),
+])
+def test_rate_movies_on_imdb(qtbot, monkeypatch, path_file, user_id, result):
+    ui, main_window, qtbot = qtbot
+    monkeypatch.setattr(VirtualBrowser, "start_rate_imdb", lambda *args, **kwargs: result)
+    monkeypatch.setattr(VirtualBrowser, "start_parsing", lambda *args, **kwargs: result)
+
+    ui.path_file = path_file
+    ui.user_id = user_id
+
+    qtbot.mouseClick(ui.button_rate, QtCore.Qt.LeftButton)
+    print(hasattr(ui, 'browser'))
+    assert hasattr(ui, 'browser') == result

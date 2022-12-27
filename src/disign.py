@@ -291,7 +291,7 @@ class UiMainWindow(object):
         """
         user_id = self.user_id
         path_file = self.path_file
-        if user_id is None or path_file is None:
+        if not user_id or not path_file:
             text = "Не указан путь для сохранения или ID"
             self.print_massage(text=text, side='error')
             return
@@ -299,11 +299,9 @@ class UiMainWindow(object):
         text = ('Для парсинга Ваших оценок с Кинопоиска, возможно понадобиться пройти '
                 'проверку на то что вы человек. Не закрывайте открытый браузер программой!')
         self.print_massage(text)
-
         for _ in range(3):
             try:
-                browser = VirtualBrowser(user_id, path_file)
-                browser.start_parsing()
+                self.browser = VirtualBrowser(user_id, path_file).start_parsing()
                 text = f'''Парсинг успешно завершен. Файлы сохранены в папку {path_file}'''
                 self.print_massage(text)
                 return
@@ -330,6 +328,11 @@ class UiMainWindow(object):
         user_id = self.user_id
         path_file = self.path_file
 
+        if not path_file:
+            text = "Не указан путь для сохранения"
+            self.print_massage(text=text, side='error')
+            return
+
         # Check if mov_dict.json file exists
         path = str(path_file) + '/mov_dict.json'
         if os.path.exists(path):
@@ -340,6 +343,10 @@ class UiMainWindow(object):
 
             self.show_rating_popup(rating_count)
 
+        elif not user_id:
+            text = "Не указан ID пользователя"
+            self.print_massage(text=text, side='error')
+            return
         else:
             self.start_parsing()
 
@@ -349,8 +356,7 @@ class UiMainWindow(object):
         self.print_massage(text)
 
         try:
-            browser = VirtualBrowser(user_id, path_file)
-            browser.start_rate_imdb()
+            self.browser = VirtualBrowser(user_id, path_file).start_rate_imdb()
 
             text = f"""Файл с ошибками (если они были) сохранен в папку {path_file}"""
             self.print_massage(text)
