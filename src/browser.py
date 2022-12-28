@@ -235,23 +235,6 @@ class VirtualBrowser:
             data = dict(reversed(list(data.items())))
             return data
 
-    @staticmethod
-    def clean_grades(grades: list) -> str:
-        """
-        Remove extra characters and convert to the correct format.
-
-        :param grades: a list of grades
-        :return: a string containing the processed grades
-        """
-        processed_grades = ''
-        grades = ''.join(grades)
-        # Extract the part of the string between the first '(' and the last ')'
-        grades = grades[grades.find('('):grades.rfind(')') + 1]
-        for character in grades:
-            if character.isdigit():
-                processed_grades += character
-        return processed_grades
-
     def parse_data_from_kinopoisk(self) -> None:
         """
         Parse data from Kinopoisk.
@@ -408,50 +391,6 @@ class VirtualBrowser:
         """
         rating = film.find('div', class_='rating').text[1:6]
         return rating
-
-    @staticmethod
-    def fetch_film_data_from_api_unofficial(kinopoisk_id: str) -> Union[dict, None]:
-        """
-        Get film data from the kinopoiskapiunofficial API.
-
-        :param kinopoisk_id: The ID of the film to fetch from the API.
-        :return: A dictionary containing the film data if the request is successful,
-            or None if the request fails or if the list of API keys is empty.
-        """
-        if not KEYS_KINOPOISK_API_UNOFFICIAL:
-            return None
-
-        for key in KEYS_KINOPOISK_API_UNOFFICIAL:
-            try:
-                # Make the API request using the current API key
-                api = requests.get(API_UNOFFICIAL_ENDPOINT + kinopoisk_id,
-                                   headers={API_UNOFFICIAL_KEY_HEADER: key,
-                                            'Content-Type': 'application/json'})
-                api = json.loads(api.content.decode('utf-8'))
-                return api
-            except (ConnectionError, json.JSONDecodeError) as error:
-                print(error)
-        return None
-
-    @staticmethod
-    def fetch_film_data_from_api_kinobd(kinopoisk_id: str) -> Union[dict, None]:
-        """
-        Get film data from the kinobd.net API.
-
-        :param kinopoisk_id: The ID of the film to fetch from the API.
-        :return: A dictionary containing the film data if the request is successful,
-            or None if the request fails or if the ID is invalid or empty.
-        """
-        if not kinopoisk_id:
-            return None
-        try:
-            # Make the API request
-            api = requests.get(API_KINOBD + kinopoisk_id, headers=USER_AGENT_HEADER)
-            api = json.loads(api.content.decode('utf-8'))
-            return api
-        except (ConnectionError, json.JSONDecodeError) as error:
-            print(error)
-            return None
 
     def start_rate_imdb(self) -> None:
         """
@@ -663,3 +602,64 @@ class VirtualBrowser:
         except Exception:
             print('Unable to verify rating')
             return False
+
+    @staticmethod
+    def fetch_film_data_from_api_unofficial(kinopoisk_id: str) -> Union[dict, None]:
+        """
+        Get film data from the kinopoiskapiunofficial API.
+
+        :param kinopoisk_id: The ID of the film to fetch from the API.
+        :return: A dictionary containing the film data if the request is successful,
+            or None if the request fails or if the list of API keys is empty.
+        """
+        if not KEYS_KINOPOISK_API_UNOFFICIAL:
+            return None
+
+        for key in KEYS_KINOPOISK_API_UNOFFICIAL:
+            try:
+                # Make the API request using the current API key
+                api = requests.get(API_UNOFFICIAL_ENDPOINT + kinopoisk_id,
+                                   headers={API_UNOFFICIAL_KEY_HEADER: key,
+                                            'Content-Type': 'application/json'})
+                api = json.loads(api.content.decode('utf-8'))
+                return api
+            except (ConnectionError, json.JSONDecodeError) as error:
+                print(error)
+        return None
+
+    @staticmethod
+    def fetch_film_data_from_api_kinobd(kinopoisk_id: str) -> Union[dict, None]:
+        """
+        Get film data from the kinobd.net API.
+
+        :param kinopoisk_id: The ID of the film to fetch from the API.
+        :return: A dictionary containing the film data if the request is successful,
+            or None if the request fails or if the ID is invalid or empty.
+        """
+        if not kinopoisk_id:
+            return None
+        try:
+            # Make the API request
+            api = requests.get(API_KINOBD + kinopoisk_id, headers=USER_AGENT_HEADER)
+            api = json.loads(api.content.decode('utf-8'))
+            return api
+        except (ConnectionError, json.JSONDecodeError) as error:
+            print(error)
+            return None
+
+    @staticmethod
+    def clean_grades(grades: list) -> str:
+        """
+        Remove extra characters and convert to the correct format.
+
+        :param grades: a list of grades
+        :return: a string containing the processed grades
+        """
+        processed_grades = ''
+        grades = ''.join(grades)
+        # Extract the part of the string between the first '(' and the last ')'
+        grades = grades[grades.find('('):grades.rfind(')') + 1]
+        for character in grades:
+            if character.isdigit():
+                processed_grades += character
+        return processed_grades
