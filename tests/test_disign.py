@@ -345,9 +345,9 @@ def test_select_save_path(qtbot, monkeypatch, path_file, result):
     ('', 'path', False),
     ('5555', 'path', True),
 ])
-def test_start_parsing(qtbot, monkeypatch, path_file, user_id, result):
+def test_parse_user_ratings(qtbot, monkeypatch, path_file, user_id, result):
     ui, main_window, qtbot = qtbot
-    monkeypatch.setattr(VirtualBrowser, "start_parsing", lambda *args, **kwargs: result)
+    monkeypatch.setattr(VirtualBrowser, "parse_user_ratings", lambda *args, **kwargs: result)
 
     ui.path_file = path_file
     ui.user_id = user_id
@@ -365,7 +365,7 @@ def test_start_parsing(qtbot, monkeypatch, path_file, user_id, result):
 def test_rate_movies_on_imdb(qtbot, monkeypatch, path_file, user_id, result):
     ui, main_window, qtbot = qtbot
     monkeypatch.setattr(VirtualBrowser, "start_rate_imdb", lambda *args, **kwargs: result)
-    monkeypatch.setattr(VirtualBrowser, "start_parsing", lambda *args, **kwargs: result)
+    monkeypatch.setattr(VirtualBrowser, "parse_user_ratings", lambda *args, **kwargs: result)
 
     ui.path_file = path_file
     ui.user_id = user_id

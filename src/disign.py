@@ -219,7 +219,7 @@ class UiMainWindow(object):
         """
         Connect the signals and slots of the user interface.
         """
-        self.button_download.clicked.connect(self.start_parsing)
+        self.button_download.clicked.connect(self.parse_user_ratings)
         self.button_enter_id.clicked.connect(self.send_user_id)
         self.button_send_path.clicked.connect(self.select_save_path)
         self.button_rate.clicked.connect(self.rate_movies_on_imdb)
@@ -267,7 +267,7 @@ class UiMainWindow(object):
         Removes the trailing '/' from the selected path if it exists.
         If a path is selected, changes the color of the button_send_path button.
         """
-        path = QFileDialog.getExistingDirectory()
+        path = QFileDialog.getExistingDirectory(directory='../data')
         if len(path) > 0 and not path.isdigit():
             self.button_send_path.setStyleSheet("background-color: rgb(80, 255, 115);\n"
                                                 "color: rgb(0, 0, 0);\n")
@@ -278,7 +278,7 @@ class UiMainWindow(object):
             path = path[0:-1]
         self.path_file = path
 
-    def start_parsing(self) -> None:
+    def parse_user_ratings(self) -> None:
         """
         Parses KinoPoisk.
 
@@ -301,7 +301,7 @@ class UiMainWindow(object):
         self.print_massage(text)
         for _ in range(3):
             try:
-                self.browser = VirtualBrowser(user_id, path_file).start_parsing()
+                self.browser = VirtualBrowser(user_id, path_file).parse_user_ratings()
                 text = f'''Парсинг успешно завершен. Файлы сохранены в папку {path_file}'''
                 self.print_massage(text)
                 return
@@ -320,7 +320,7 @@ class UiMainWindow(object):
 
     def rate_movies_on_imdb(self) -> None:
         """
-        Rates movies on IMDB. If a mov_dict.json file exists, a pop-up window will appear asking the
+        Rates movies on IMDB. If a rating_data.json file exists, a pop-up window will appear asking the
         user if they want to continue rating movies or start parsing again. If the file does not
         exist, parsing will start immediately. If an error occurs during the rating process, it will
         be caught and a message will be printed.
@@ -333,8 +333,8 @@ class UiMainWindow(object):
             self.print_massage(text=text, side='error')
             return
 
-        # Check if mov_dict.json file exists
-        path = str(path_file) + '/mov_dict.json'
+        # Check if rating_data.json file exists
+        path = str(path_file) + '/rating_data.json'
         if os.path.exists(path):
             # If file exists, open it and count the number of ratings
             with open(path, 'r', encoding='utf-8') as file:
@@ -348,7 +348,7 @@ class UiMainWindow(object):
             self.print_massage(text=text, side='error')
             return
         else:
-            self.start_parsing()
+            self.parse_user_ratings()
 
         text = ("Для проставления оценок на Ваш IMDB, понадобиться пройти авторизацию на сайте."
                 " Сам процесс занимает время, так как каждый фильм проставляется отдельно. "
@@ -370,7 +370,7 @@ class UiMainWindow(object):
     def show_rating_popup(self, rating_count: int) -> None:
         """
         Shows a pop-up window to the user, asking if they want to continue rating movies using an
-        existing mov_dict.json file or start parsing again. The number of ratings in the file is
+        existing rating_data.json file or start parsing again. The number of ratings in the file is
         passed as an argument.
 
         :param rating_count: The number of ratings.
@@ -382,7 +382,7 @@ class UiMainWindow(object):
             continuing with the rating process.
             """
             if 'No' in answer.text():
-                self.start_parsing()
+                self.parse_user_ratings()
 
         massage = QMessageBox()
         massage.setWindowTitle('Important')
