@@ -1,4 +1,5 @@
-﻿# Grade converter: Kinopoisk -> IMDB
+﻿# Movie Rating Migrator: Kinopoisk -> IMDB
+
 
 
 ## Программа для скачивания личных оценок с Кинопоиска в формате Excel, а также для переноса оценок с Кинопоиска на IMDB.
