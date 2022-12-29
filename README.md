@@ -1,6 +1,9 @@
 ﻿# Movie Rating Migrator: Kinopoisk -> IMDB
 
+<p align="center">
 
+  <img  src="https://i.ibb.co/R9XL3F3/Screenshot-41.png" alt="Screenshot-41">
+</p>
 
 ## Программа для скачивания личных оценок с Кинопоиска в формате Excel, а также для переноса оценок с Кинопоиска на IMDB.
 
@@ -11,9 +14,12 @@
 
 
 ## Для использования программы через архив:
-1) Cкачайте файл - "Grade converter.rar", и распакуйте его
+1) Cкачайте файл - "Movie_Rating_Migrator_Kinopoisk_to_IMDB.rar", и распакуйте его
 2) Загрузите последнюю версию chromedriver для своей системы [здесь](https://chromedriver.chromium.org/downloads).
-3) Замените chromedriver в папке [*chrome_driver*](https://github.com/Rocky-04/grade_converter_kinopoisk-IMDB/tree/main/chrome_driver) вашей загрузкой.
-4) Запустите файл - "disign.exe".
+3) Замените chromedriver.exe в папке вашей загрузкой.
+4) Запустите файл - "Movie_Rating_Migrator_Kinopoisk_to_IMDB.exe".
 5) Введите ID Кинопоиска в которого нужно спарсить оценки, и укажите путь для сохранения файлов.
 6) Выбирайте в меню, что именно Вам нужно сделать и следуйте инструкциям программы.
+
+
+
