@@ -1,4 +1,5 @@
 import json
+import os
 import pickle
 import time
 from typing import Union
@@ -7,6 +8,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.common import NoSuchElementException
 from selenium.webdriver import ActionChains
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
@@ -31,13 +33,6 @@ class VirtualBrowser:
         self.user_id = user_id
         self.path_file = path_file
 
-    def parse_user_ratings(self) -> None:
-        """
-        Start parsing the user's ratings in EXCEL and JSON formats.
-
-        :param self: the instance of the current object
-        """
-
         # Initialize variables
         self.russian_movie_names = []
         self.english_movie_names = []
@@ -56,6 +51,20 @@ class VirtualBrowser:
                             'kinopoisk_ratings': self.kinopoisk_ratings,
                             "imdb_ids": self.imdb_ids}
 
+        self.top_movies = {}
+
+        # Initialize the Chrome browser
+        self.browser = Chrome('../chrome_driver/chromedriver.exe')
+
+        # Initialize list of errors
+        self.errors = []
+
+    def parse_user_ratings(self) -> None:
+        """
+        Start parsing the user's ratings in EXCEL and JSON formats.
+
+        :param self: the instance of the current object
+        """
         # Launch the Kinopoisk browser and get the top movies list
         self.launch_kinopoisk_browser()
         self.top_movies = self.load_json_file('../data/top_movies_25000.json')
@@ -111,7 +120,7 @@ class VirtualBrowser:
         """
 
         file = self.path_file + '/movie_list.xlsx'  # save ratings in xlsx
-        with open(file, 'w') as xlsx:
+        with open(file, 'w'):
             data = pd.DataFrame(self.rating_data)
         data.to_excel(file)
         print('Ratings successfully saved to Excel file.')
@@ -184,18 +193,15 @@ class VirtualBrowser:
 
         :param self: the instance of the current object
         """
+        if not os.path.exists('session_imdb'):
+            # Navigate to the login page
+            self.browser.get(f'https://www.imdb.com/registration/signin?ref=nv_generic_lgin&u=%2F')
 
-        # Initialize the Chrome browser
-        self.browser = Chrome('../chrome_driver/chromedriver.exe')
+            # Wait for the user to login
+            Wait(self.browser, 600).until(ec.url_contains('https://www.imdb.com/?ref_=login'))
 
-        # Navigate to the login page
-        self.browser.get(f'https://www.imdb.com/registration/signin?ref=nv_generic_lgin&u=%2F')
-
-        # Wait for the user to login
-        Wait(self.browser, 600).until(ec.url_contains('https://www.imdb.com/?ref_=login'))
-
-        # Get the cookies for login
-        pickle.dump(self.browser.get_cookies(), open('session_imdb', 'wb'))
+            # Get the cookies for login
+            pickle.dump(self.browser.get_cookies(), open('session_imdb', 'wb'))
 
         # Set up Chrome options
         options = webdriver.ChromeOptions()
@@ -214,7 +220,7 @@ class VirtualBrowser:
         options.add_argument("--disable-extensions")
         prefs = {"profile.managed_default_content_settings.images": 2}
         options.add_experimental_option("prefs", prefs)
-        # options.headless = True # Show the window or not
+        options.headless = False  # Show the window or not
         options.add_argument("--window-size=1400,1000")
         self.browser = Chrome('../chrome_driver/chromedriver.exe', options=options)
         self.browser.get('https://www.imdb.com')
@@ -222,18 +228,6 @@ class VirtualBrowser:
         # Load the cookies
         for cookie in pickle.load(open('session_imdb', 'rb')):
             self.browser.add_cookie(cookie)
-
-    def load_json_file(self, file: str) -> dict:
-        """
-        Load the contents of a JSON file.
-
-        :param file: the path to the JSON file
-        :return: a dictionary containing the data from the JSON file
-        """
-        with open(file, 'r', encoding="utf-8") as json_file:
-            data = json.load(json_file)
-            data = dict(reversed(list(data.items())))
-            return data
 
     def parse_data_from_kinopoisk(self) -> None:
         """
@@ -276,7 +270,7 @@ class VirtualBrowser:
             kinopoisk_rating = self.convert_rating_to_float(rating)
             self.kinopoisk_ratings.append(kinopoisk_rating)
 
-    def get_imdb_id(self, kinopoisk_id: str) -> str:
+    def get_imdb_id(self, kinopoisk_id: str) -> Union[str, None]:
         """
         Retrieve the IMDb ID for a movie with a given Kinopoisk ID.
 
@@ -290,30 +284,56 @@ class VirtualBrowser:
             return top_movies[kinopoisk_id]['id_imdb']
 
         # 2. Try to retrieve the IMDb ID using the kinobd API
-        api_response = self.fetch_film_data_from_api_kinobd(kinopoisk_id)
-        if api_response is not None:
-            return api_response['data'][0]['imdb_id']
+        try:
+            api_response = self.fetch_film_data_from_api_kinobd(kinopoisk_id)
+            if api_response is not None:
+                return api_response['data'][0]['imdb_id']
+        except (KeyError, IndexError, TypeError):
+            pass
 
         # 3. Try to retrieve the IMDb ID using the kinopoiskapiunofficial API
-        api_response = self.fetch_film_data_from_api_unofficial(kinopoisk_id)
-        if api_response is not None:
-            return api_response['imdbId']
+        try:
+            api_response = self.fetch_film_data_from_api_unofficial(kinopoisk_id)
+            if api_response is not None:
+                return api_response['imdbId']
+        except (KeyError, IndexError, TypeError):
+            pass
 
         # If the IMDb ID could not be found, return None
         return None
 
-    def convert_rating_to_float(self, rating: str) -> float:
+    def get_movie_name(self, kinopoisk_id: str) -> Union[str, None]:
         """
-        Convert a rating string to a float.
+        Retrieve the russian name for a movie with a given Kinopoisk ID.
 
         :param self: the instance of the current object
-        :param rating: The rating string to be converted
-        :return: The rating as a float, or None if it could not be converted
+        :param kinopoisk_id: The Kinopoisk ID of the movie
+        :return: The russian name of the movie, or None if it could not be found
         """
+        top_movies = self.top_movies
+
+        # 1. Try to find the russian name in the top movies dictionary
+        if kinopoisk_id in top_movies:
+            return top_movies[kinopoisk_id]['name_movie_rus']
+
+        # 2. Try to retrieve the russian name using the kinobd API
         try:
-            return float(rating)
-        except ValueError:
-            return None
+            api_response = self.fetch_film_data_from_api_kinobd(kinopoisk_id)
+            if api_response is not None:
+                return api_response['data'][0]['name_russian']
+        except (KeyError, IndexError, TypeError):
+            pass
+
+        # 3. Try to retrieve the russian name using the kinopoiskapiunofficial API
+        try:
+            api_response = self.fetch_film_data_from_api_unofficial(kinopoisk_id)
+            if api_response is not None:
+                return api_response['nameRu']
+        except (KeyError, IndexError, TypeError):
+            pass
+
+        # If the russian name could not be found, return None
+        return None
 
     def get_films_from_page(self) -> list:
         """
@@ -325,26 +345,6 @@ class VirtualBrowser:
         films = soup.find('div', class_='profileFilmsList').findAll('div', class_='item')
         return films
 
-    def get_english_movie_name(self, film) -> str:
-        """
-        Get the English movie name from a film.
-
-        :param self: the instance of the current object
-        :param film: the film element
-        """
-        english_movie_name = film.find('div', class_='info').find('div', class_='nameEng').text
-        return english_movie_name
-
-    def get_user_rating(self, film) -> str:
-        """
-        Get the user rating from a film.
-
-        :param self: the instance of the current object
-        :param film: the film element
-        """
-        user_rating = film.find('div', class_='vote').text
-        return user_rating
-
     def get_user_rating_count(self, film) -> str:
         """
         Get the count of user ratings from a film.
@@ -354,43 +354,6 @@ class VirtualBrowser:
         """
         user_rating_count = self.clean_grades(film.find('div', class_='rating').text.strip())
         return user_rating_count
-
-    def get_russian_movie_name_and_week(self, film) -> tuple:
-        """
-        Get the Russian movie name and the week from a film.
-
-        :param self: the instance of the current object
-        :param film: the film element
-        """
-        russian_movie_name_and_week = str(film.find('div', class_='info').find(
-            'div', class_='nameRus').text)
-        russian_movie_name = russian_movie_name_and_week[:russian_movie_name_and_week.find('(')]
-        week = russian_movie_name_and_week[-5:-1:1]
-        return russian_movie_name, week
-
-    def get_kinopoisk_id(self, film) -> str:
-        """
-        Get the Kinopoisk ID
-
-        :param self: the instance of the current object
-        :param film: the film element
-        """
-        rating_html = str(film.find('div', class_='selects vote_widget'))
-        kinopoisk_id = rating_html[
-                       rating_html.find('rating_user_') + 12: rating_html.find(
-                           '"', (rating_html.find('rating_user_') + 13))
-                       ]
-        return kinopoisk_id
-
-    def get_kinopoisk_rating(self, film) -> str:
-        """
-        Get the Kinopoisk rating
-
-        :param self: the instance of the current object
-        :param film: the film element
-        """
-        rating = film.find('div', class_='rating').text[1:6]
-        return rating
 
     def start_rate_imdb(self) -> None:
         """
@@ -402,9 +365,6 @@ class VirtualBrowser:
         A file containing the list of errors will be created at the end of the function.
         """
         self.launch_imdb_browser()
-
-        # Initialize list of errors
-        self.errors = []
 
         # Load the JSON file
         movies = self.load_json_file(self.path_file + '/rating_data.json')
@@ -422,7 +382,7 @@ class VirtualBrowser:
             user_ratings = movies[movie]['user_ratings']
             movie_name = movies[movie]['movie_name']
             if imdb_id is None:
-                self.add_error(imdb_id, user_ratings, movie_name, 'IMDB ID not found for movie')
+                self.add_error(movie, movies[movie], 'IMDB ID not found for movie')
                 continue
 
             try:
@@ -437,10 +397,10 @@ class VirtualBrowser:
                         json.dump(movies, file, indent=3, ensure_ascii=False)
                 else:
                     # If the rating was not successful, add the movie to the list of errors
-                    self.add_error(imdb_id, user_ratings, movie_name)
+                    self.add_error(movie, movies[movie])
 
             except Exception as error:
-                self.add_error(imdb_id, user_ratings, movie_name, {error})
+                self.add_error(movie, movies[movie], str(error))
 
         # Create an errors file
         self.create_errors_file()
@@ -490,30 +450,39 @@ class VirtualBrowser:
         errors = self.errors
         if len(errors) > 0:
             file = self.path_file + '/errors.xlsx'
-            with open(file, 'w') as xlsx:
+            with open(file, 'w'):
                 data = pd.DataFrame(errors)
             data.to_excel(file)
             print('Error file successfully saved in XLSX format.')
 
-    def add_error(self, imdb_id: str, user_ratings: str, movie_name: str,
-                  error_details: str = '') -> None:
+    def add_error(self, kinopoisk_id: str, data: dict, error_details: str = '') -> None:
         """
         Add an error to the list of errors. This function is used to record an error that
         occurred while attempting to rate a movie on IMDB.
 
         :param self: the instance of the current object
-        :param imdb_id: the IMDB ID of the movie
-        :param user_ratings: the rating that was expected to be applied to the movie
-        :param movie_name: the title of the movie
+        :param kinopoisk_id: the kinopoisk ID of the movie
+        :param data: a dictionary containing the imdb_ids, user_ratings, movie_name of the movie.
         :param error_details: (optional) additional details about the error
         """
-        if not error_details:
-            error_details = f'https://www.imdb.com//title//{imdb_id}'
+        imdb_id = data['imdb_ids']
+        user_ratings = data['user_ratings']
+        movie_name = data['movie_name']
+
+        if not movie_name:
+            movie_name = self.get_movie_name(kinopoisk_id)
+
+        if imdb_id:
+            link_imdb = f'https://www.imdb.com/title/{imdb_id}'
+        else:
+            link_imdb = ''
 
         self.errors.append(
-            [imdb_id, movie_name, f"should have a rating of {user_ratings}", error_details])
+            [kinopoisk_id, imdb_id, movie_name,
+             f"should have a rating of {user_ratings}", error_details, link_imdb])
 
-        print(f'{imdb_id}, {movie_name}, should have a rating of {user_ratings}:: {error_details} ')
+        print(f'{kinopoisk_id}, {imdb_id}, {movie_name}, '
+              f'should have a rating of {user_ratings}:: {link_imdb}, {error_details}')
 
     def open_imdb_page(self, imdb_id: str) -> bool:
         """
@@ -599,9 +568,66 @@ class VirtualBrowser:
                 return True
             else:
                 return False
-        except Exception:
+        except NoSuchElementException:
             print('Unable to verify rating')
             return False
+
+    @staticmethod
+    def get_english_movie_name(film) -> str:
+        """
+        Get the English movie name from a film.
+
+        :param film: the film element
+        """
+        english_movie_name = film.find('div', class_='info').find('div', class_='nameEng').text
+        return english_movie_name
+
+    @staticmethod
+    def get_user_rating(film) -> str:
+        """
+        Get the user rating from a film.
+
+        :param film: the film element
+        """
+        user_rating = film.find('div', class_='vote').text
+        return user_rating
+
+    @staticmethod
+    def get_russian_movie_name_and_week(film) -> tuple:
+        """
+        Get the Russian movie name and the week from a film.
+
+        :param film: the film element
+        """
+        russian_movie_name_and_week = str(film.find('div', class_='info').find(
+            'div', class_='nameRus').text)
+        russian_movie_name = russian_movie_name_and_week[:russian_movie_name_and_week.find('(')]
+        week = russian_movie_name_and_week[-5:-1:1]
+        return russian_movie_name, week
+
+    @staticmethod
+    def get_kinopoisk_id(film) -> str:
+        """
+        Get the Kinopoisk ID
+
+        :param film: the film element
+        """
+        rating_html = str(film.find('div', class_='selects vote_widget'))
+        kinopoisk_id = rating_html[
+                       rating_html.find('rating_user_') + 12: rating_html.find(
+                           '"', (rating_html.find('rating_user_') + 13))
+                       ]
+        return kinopoisk_id
+
+    @staticmethod
+    def get_kinopoisk_rating(film) -> str:
+        """
+        Get the Kinopoisk rating
+
+        :param film: the film element
+        """
+        rating = film.find('div', class_='rating').text[1:6]
+        return rating
 
     @staticmethod
     def fetch_film_data_from_api_unofficial(kinopoisk_id: str) -> Union[dict, None]:
@@ -648,6 +674,32 @@ class VirtualBrowser:
             return None
 
     @staticmethod
+    def load_json_file(file: str) -> dict:
+        """
+        Load the contents of a JSON file.
+
+        :param file: the path to the JSON file
+        :return: a dictionary containing the data from the JSON file
+        """
+        with open(file, 'r', encoding="utf-8") as json_file:
+            data = json.load(json_file)
+            data = dict(reversed(list(data.items())))
+            return data
+
+    @staticmethod
+    def convert_rating_to_float(rating: str) -> Union[float, None]:
+        """
+        Convert a rating string to a float.
+
+        :param rating: The rating string to be converted
+        :return: The rating as a float, or None if it could not be converted
+        """
+        try:
+            return float(rating)
+        except ValueError:
+            return None
+
+    @staticmethod
     def clean_grades(grades: list) -> str:
         """
         Remove extra characters and convert to the correct format.
@@ -657,7 +709,7 @@ class VirtualBrowser:
         """
         processed_grades = ''
         grades = ''.join(grades)
-        # Extract the part of the string between the first '(' and the last ')'
+        # Extract the part of the string between the '(' and ')'
         grades = grades[grades.find('('):grades.rfind(')') + 1]
         for character in grades:
             if character.isdigit():

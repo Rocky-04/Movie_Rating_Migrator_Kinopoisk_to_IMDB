@@ -320,8 +320,8 @@ class UiMainWindow(object):
 
     def rate_movies_on_imdb(self) -> None:
         """
-        Rates movies on IMDB. If a rating_data.json file exists, a pop-up window will appear asking the
-        user if they want to continue rating movies or start parsing again. If the file does not
+        Rates movies on IMDB. If a rating_data.json file exists, a pop-up window will appear asking
+        the user if they want to continue rating movies or start parsing again. If the file does not
         exist, parsing will start immediately. If an error occurs during the rating process, it will
         be caught and a message will be printed.
         """
