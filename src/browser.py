@@ -23,6 +23,10 @@ from data.API import USER_AGENT_HEADER
 
 
 class VirtualBrowser:
+    DRIVER_PATH = '../chrome_driver/chromedriver.exe'
+    TOP_MOVIES_PATH = '../data/top_movies_25000.json'
+    URL_KINOPOISK = 'https://www.kinopoisk.ru/user/'
+
     def __init__(self, user_id: int, path_file: str = '') -> None:
         """
         Initialize a new VirtualBrowser object.
@@ -54,7 +58,7 @@ class VirtualBrowser:
         self.top_movies = {}
 
         # Initialize the Chrome browser
-        self.browser = Chrome('../chrome_driver/chromedriver.exe')
+        self.browser = Chrome(self.DRIVER_PATH)
 
         # Initialize list of errors
         self.errors = []
@@ -67,7 +71,7 @@ class VirtualBrowser:
         """
         # Launch the Kinopoisk browser and get the top movies list
         self.launch_kinopoisk_browser()
-        self.top_movies = self.load_json_file('../data/top_movies_25000.json')
+        self.top_movies = self.load_json_file(self.TOP_MOVIES_PATH)
 
         # Parse the user's ratings from the Kinopoisk website
         self.parse_ratings()
@@ -92,23 +96,22 @@ class VirtualBrowser:
         # Parse ratings
         for i in range(1, (num_ratings // 200) + 2):
             try:
-                url = (f'https://www.kinopoisk.ru/user/{self.user_id}/'
-                       f'votes/list/ord/date/page/{i}/#list')
+                url = f'{self.URL_KINOPOISK}{self.user_id}/votes/list/ord/date/page/{i}/#list'
                 print(f'Retrieving page {i} - {url}')
                 time.sleep(2)
                 self.browser.get(url)
                 Wait(self.browser, 600).until(
-                    ec.url_contains(f'https://www.kinopoisk.ru/user/{self.user_id}/votes/list'))
+                    ec.url_contains(f'{self.URL_KINOPOISK}{self.user_id}/votes/list'))
             except Exception as error:
                 print(error)
                 self.browser.refresh()
-                url = (f'https://www.kinopoisk.ru/user/{self.user_id}/'
+                url = (f'{self.URL_KINOPOISK}{self.user_id}/'
                        f'votes/list/ord/date/perpage/200/page/{i}/#list')
                 print(f'Retrieving page {i} - {url}')
                 time.sleep(2)
                 self.browser.get(url)
                 Wait(self.browser, 600).until(
-                    ec.url_contains(f'https://www.kinopoisk.ru/user/{self.user_id}/votes/list'))
+                    ec.url_contains(f'{self.URL_KINOPOISK}{self.user_id}/votes/list'))
             self.parse_data_from_kinopoisk()
         self.browser.quit()
 
@@ -157,7 +160,7 @@ class VirtualBrowser:
         """
 
         # Set the url for the browser to visit
-        url = (f'https://www.kinopoisk.ru/user/{self.user_id}'
+        url = (f'{self.URL_KINOPOISK}{self.user_id}'
                f'/votes/list/ord/date/perpage/200/page/1/#list')
 
         # Set up Chrome options
@@ -173,7 +176,7 @@ class VirtualBrowser:
         options.add_argument("--disable-extensions")
 
         # Initialize the Chrome browser with the specified options
-        self.browser = Chrome('../chrome_driver/chromedriver.exe', options=options)
+        self.browser = Chrome(self.DRIVER_PATH, options=options)
 
         # Navigate to the specified url
         self.browser.get(url)
@@ -222,7 +225,7 @@ class VirtualBrowser:
         options.add_experimental_option("prefs", prefs)
         options.headless = False  # Show the window or not
         options.add_argument("--window-size=1400,1000")
-        self.browser = Chrome('../chrome_driver/chromedriver.exe', options=options)
+        self.browser = Chrome(self.DRIVER_PATH, options=options)
         self.browser.get('https://www.imdb.com')
 
         # Load the cookies
