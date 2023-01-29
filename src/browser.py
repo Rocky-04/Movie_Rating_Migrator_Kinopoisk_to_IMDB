@@ -375,7 +375,9 @@ class VirtualBrowser:
         print('Start grading...')
 
         # Iterate through the movies in the JSON file
-        for movie in movies:
+        for num, movie in enumerate(movies, start=1):
+            print(f'{num}) ', end='')
+
             # Skip movies that have already been rated successfully
             if 'success' in movies[movie]:
                 continue
@@ -390,7 +392,7 @@ class VirtualBrowser:
 
             try:
                 # Attempt to rate the movie
-                rating_success = self.rate_imdb_ids(imdb_id, user_ratings)
+                rating_success, error = self.rate_imdb_ids(imdb_id, user_ratings)
                 if rating_success:
                     # If the rating was successful, mark the movie as success and update JSON file
                     movies[movie]['success'] = True
@@ -400,17 +402,27 @@ class VirtualBrowser:
                         json.dump(movies, file, indent=3, ensure_ascii=False)
                 else:
                     # If the rating was not successful, add the movie to the list of errors
-                    self.add_error(movie, movies[movie])
+                    self.add_error(movie, movies[movie], error)
 
             except Exception as error:
                 self.add_error(movie, movies[movie], str(error))
+            finally:
+                current_window = self.browser.window_handles[0]
+
+                # switch to the new window and close it
+                for handle in self.browser.window_handles:
+                    if handle != current_window:
+                        self.browser.switch_to.window(handle)
+                        self.browser.close()
+
+                self.browser.switch_to.window(current_window)
+
+        self.browser.quit()
 
         # Create an errors file
         self.create_errors_file()
 
-        self.browser.quit()
-
-    def rate_imdb_ids(self, imdb_id, user_ratings) -> bool:
+    def rate_imdb_ids(self, imdb_id, user_ratings) -> tuple:
         """
         Rate a movie on IMDB.
 
@@ -424,25 +436,21 @@ class VirtualBrowser:
 
         # Open the movie's IMDB page
         if not self.open_imdb_page(imdb_id):
-            return False
-        time.sleep(1)
+            return False, 'Unable to retrieve web page'
+        time.sleep(0.5)
 
         # Check if the correct rating is already applied
-        if self.check_rating(user_ratings):
-            return True
+        if self.verify_rating(user_ratings):
+            return True, ''
 
         # Apply the rating
-        if not self.apply_rating(user_ratings):
-            return False
+        self.apply_rating(user_ratings)
 
         # Verify that the rating was applied successfully
         if not self.verify_rating(user_ratings):
-            return False
+            return False, 'Unable to verify rating'
 
-        # Close the IMDB page and switch back to the original window
-        self.browser.close()
-        self.browser.switch_to.window(self.browser.window_handles[0])
-        return True
+        return True, ''
 
     def create_errors_file(self) -> None:
         """
@@ -454,7 +462,9 @@ class VirtualBrowser:
         if len(errors) > 0:
             file = self.path_file + '/errors.xlsx'
             with open(file, 'w'):
-                data = pd.DataFrame(errors)
+                data = pd.DataFrame(errors, columns=['kinopoisk_id', 'imdb_id', 'movie_name',
+                                                     'should have a rating', 'error_details',
+                                                     'link_imdb'])
             data.to_excel(file)
             print('Error file successfully saved in XLSX format.')
 
@@ -481,11 +491,10 @@ class VirtualBrowser:
             link_imdb = ''
 
         self.errors.append(
-            [kinopoisk_id, imdb_id, movie_name,
-             f"should have a rating of {user_ratings}", error_details, link_imdb])
+            [kinopoisk_id, imdb_id, movie_name, user_ratings, error_details, link_imdb])
 
         print(f'{kinopoisk_id}, {imdb_id}, {movie_name}, '
-              f'should have a rating of {user_ratings}:: {link_imdb}, {error_details}')
+              f'should have a rating of {user_ratings}: {link_imdb}, {error_details}')
 
     def open_imdb_page(self, imdb_id: str) -> bool:
         """
@@ -500,31 +509,7 @@ class VirtualBrowser:
             url = 'https://www.imdb.com/title/' + imdb_id
             self.browser.get(url)
             return True
-        except Exception as error:
-            print(f'{error}: {imdb_id} - Unable to retrieve web page')
-            return False
-
-    def check_rating(self, user_ratings: str) -> bool:
-        """
-        Check if the correct rating is already applied to the movie.
-
-        :param user_ratings: the rating that is expected to be applied to the movie
-        :return: True if the correct rating is already applied, False otherwise
-        """
-        try:
-            # Check if the current rating matches the expected rating
-            if self.browser.find_element(By.XPATH, (
-                    '/html/body/div[2]/main/div/section[1]/section/div[3]/section/'
-                    'section/div[2]/div[2]/div/div[2]/button/div/div/div[2]/div/'
-                    'span')).text == user_ratings:
-                # Close the IMDB page and switch back to the original window
-                self.browser.close()
-                self.browser.switch_to.window(self.browser.window_handles[0])
-                return True
-            else:
-                return False
-        except Exception as error:
-            print(f'{error}: Unable to check rating')
+        except Exception:
             return False
 
     def apply_rating(self, user_ratings: str) -> bool:
@@ -549,8 +534,7 @@ class VirtualBrowser:
             self.browser.find_element(By.XPATH, ('/html/body/div[4]/div[2]/div/div[2]/div/div[2]/'
                                                  'div[2]/button')).click()
             return True
-        except Exception as error:
-            print(error)
+        except Exception:
             return False
 
     def verify_rating(self, user_ratings: str) -> bool:
@@ -572,7 +556,6 @@ class VirtualBrowser:
             else:
                 return False
         except NoSuchElementException:
-            print('Unable to verify rating')
             return False
 
     @staticmethod
@@ -652,8 +635,8 @@ class VirtualBrowser:
                                             'Content-Type': 'application/json'})
                 api = json.loads(api.content.decode('utf-8'))
                 return api
-            except (ConnectionError, json.JSONDecodeError) as error:
-                print(error)
+            except (ConnectionError, json.JSONDecodeError):
+                pass
         return None
 
     @staticmethod
