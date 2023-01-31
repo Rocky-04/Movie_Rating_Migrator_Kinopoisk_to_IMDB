@@ -2,6 +2,8 @@ from PyQt5 import QtWidgets
 
 from src.disign import UiMainWindow
 
+
+
 if __name__ == "__main__":
     import sys
 

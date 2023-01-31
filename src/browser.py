@@ -22,9 +22,9 @@ from data.API import USER_AGENT_HEADER
 
 
 class VirtualBrowser:
-    DRIVER_PATH = '../chrome_driver/chromedriver.exe'
-    TOP_MOVIES_PATH = '../data/top_movies_25000.json'
-    SESSION_KINOPOISK_PATH = '../data/session_kinopoisk'
+    DRIVER_PATH = 'chrome_driver/chromedriver.exe'
+    TOP_MOVIES_PATH = 'data/top_movies_25000.json'
+    SESSION_KINOPOISK_PATH = 'data/session_kinopoisk'
     URL_KINOPOISK = 'https://www.kinopoisk.ru/user/'
 
     def __init__(self, user_id: int, path_file: str = '') -> None:

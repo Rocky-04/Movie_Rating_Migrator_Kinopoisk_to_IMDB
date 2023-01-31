@@ -14,8 +14,8 @@ from src.browser import VirtualBrowser
 
 
 class UiMainWindow(object):
-    ICON_PATH = '../img/icon.ico'
-    DEFAULT_PATH = '../data'
+    ICON_PATH = 'img/icon.ico'
+    DEFAULT_PATH = 'data'
 
     def __init__(self):
         # Initialize instance variables

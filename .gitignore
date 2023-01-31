@@ -3,7 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache
-
+*for_exe
+*output
 db.env
 mysql.env
 .pg-env
