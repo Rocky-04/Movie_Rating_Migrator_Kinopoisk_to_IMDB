@@ -8,7 +8,6 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common import NoSuchElementException
 from selenium.webdriver import ActionChains
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
@@ -376,18 +375,22 @@ class VirtualBrowser:
 
         # Iterate through the movies in the JSON file
         for num, movie in enumerate(movies, start=1):
-            print(f'{num}) ', end='')
-
-            # Skip movies that have already been rated successfully
-            if 'success' in movies[movie]:
-                continue
+            print(f'{num})', end=' ')
 
             # Get the IMDB ID of the movie
             imdb_id = movies[movie]['imdb_ids']
             user_ratings = movies[movie]['user_ratings']
             movie_name = movies[movie]['movie_name']
-            if imdb_id is None:
-                self.add_error(movie, movies[movie], 'IMDB ID not found for movie')
+
+            # Skip movies that have already been rated successfully
+            if 'success' in movies[movie]:
+                print(f"{movie_name} - rating of {user_ratings} has already been posted")
+                continue
+
+            if not imdb_id:
+                imdb_id = self.get_imdb_id(movie)
+                if not imdb_id:
+                    self.add_error(movie, movies[movie], 'IMDB ID not found for movie')
                 continue
 
             try:
@@ -437,11 +440,6 @@ class VirtualBrowser:
         # Open the movie's IMDB page
         if not self.open_imdb_page(imdb_id):
             return False, 'Unable to retrieve web page'
-        time.sleep(0.5)
-
-        # Check if the correct rating is already applied
-        if self.verify_rating(user_ratings):
-            return True, ''
 
         # Apply the rating
         self.apply_rating(user_ratings)
@@ -451,6 +449,72 @@ class VirtualBrowser:
             return False, 'Unable to verify rating'
 
         return True, ''
+
+    def open_imdb_page(self, imdb_id: str) -> bool:
+        """
+        Open the movie's IMDB page in a new window.
+
+        :param imdb_id: the IMDB ID of the movie
+        :return: True if the page was successfully opened, False otherwise
+        """
+        try:
+            # Open the movie's IMDB page in a new window
+            self.browser.switch_to.new_window()
+            url = 'https://www.imdb.com/title/' + imdb_id
+            self.browser.get(url)
+            return True
+        except Exception:
+            return False
+
+    def apply_rating(self, user_ratings: str) -> bool:
+        """
+        Apply a rating to a movie on IMDB.
+
+        :param user_ratings: the rating to be applied to the movie (1-10)
+        :return: True if the rating was successfully applied, False otherwise
+        """
+        grade = (f'/html/body/div[4]/div[2]/div/div[2]/div/div[2]/div[2]/div/div[2]/'
+                 f'button[{int(user_ratings)}]')
+        try:
+            # Click the rating button
+            self.browser.find_element(By.XPATH, (
+                '/html/body/div[2]/main/div/section[1]/section/div[3]/section/'
+                'section/div[2]/div[2]/div/div[2]/button')).click()
+
+            # Select the desired rating
+            element = Wait(self.browser, 1).until(ec.presence_of_element_located((By.XPATH, grade)))
+            time.sleep(0.4)
+
+            ActionChains(self.browser).move_to_element(element).click().perform()
+            # Click the rating button to save the rating
+            self.browser.find_element(By.XPATH, ('/html/body/div[4]/div[2]/div/div[2]/div/div[2]/'
+                                                 'div[2]/button')).click()
+            time.sleep(0.2)
+            return True
+        except Exception:
+            return False
+
+    def verify_rating(self, user_ratings: str) -> bool:
+        """
+        Verify that the rating was successfully applied to the movie.
+
+        :param user_ratings: the rating that was expected to be applied to the movie
+
+        :return: True if the rating was successfully applied, False otherwise
+        """
+        grade = ('/html/body/div[2]/main/div/section[1]/section/div[3]/section/section/div[2]/'
+                 'div[2]/div/div[2]/button/div/div/div[2]/div/span')
+        try:
+            # Check if the current rating matches the expected rating
+            element = Wait(self.browser, 1).until(ec.presence_of_element_located((By.XPATH, grade)))
+            if element.text == user_ratings:
+                return True
+            elif self.browser.find_element(By.XPATH, grade).text == user_ratings:
+                return True
+            else:
+                return False
+        except Exception:
+            return False
 
     def create_errors_file(self) -> None:
         """
@@ -495,68 +559,6 @@ class VirtualBrowser:
 
         print(f'{kinopoisk_id}, {imdb_id}, {movie_name}, '
               f'should have a rating of {user_ratings}: {link_imdb}, {error_details}')
-
-    def open_imdb_page(self, imdb_id: str) -> bool:
-        """
-        Open the movie's IMDB page in a new window.
-
-        :param imdb_id: the IMDB ID of the movie
-        :return: True if the page was successfully opened, False otherwise
-        """
-        try:
-            # Open the movie's IMDB page in a new window
-            self.browser.switch_to.new_window()
-            url = 'https://www.imdb.com/title/' + imdb_id
-            self.browser.get(url)
-            return True
-        except Exception:
-            return False
-
-    def apply_rating(self, user_ratings: str) -> bool:
-        """
-        Apply a rating to a movie on IMDB.
-
-        :param user_ratings: the rating to be applied to the movie (1-10)
-        :return: True if the rating was successfully applied, False otherwise
-        """
-        try:
-            # Click the rating button
-            self.browser.find_element(By.XPATH, (
-                '/html/body/div[2]/main/div/section[1]/section/div[3]/section/'
-                'section/div[2]/div[2]/div/div[2]/button')).click()
-            time.sleep(1)
-            # Select the desired rating
-            element = self.browser.find_element(By.XPATH,
-                                                (f'/html/body/div[4]/div[2]/div/div[2]/div/div[2]/'
-                                                 f'div[2]/div/div[2]/button[{user_ratings}]'))
-            ActionChains(self.browser).move_to_element(element).click().perform()
-            # Click the rating button to save the rating
-            self.browser.find_element(By.XPATH, ('/html/body/div[4]/div[2]/div/div[2]/div/div[2]/'
-                                                 'div[2]/button')).click()
-            return True
-        except Exception:
-            return False
-
-    def verify_rating(self, user_ratings: str) -> bool:
-        """
-        Verify that the rating was successfully applied to the movie.
-
-        :param user_ratings: the rating that was expected to be applied to the movie
-
-        :return: True if the rating was successfully applied, False otherwise
-        """
-        try:
-            # Check if the current rating matches the expected rating
-            if self.browser.find_element(By.XPATH, (
-                    '/html/body/div[2]/main/div/section[1]/section/'
-                    'div[3]/section/section/div[2]/div[2]/div/div[2]'
-                    '/button/div/div/div[2]/div/'
-                    'span')).text == user_ratings:
-                return True
-            else:
-                return False
-        except NoSuchElementException:
-            return False
 
     @staticmethod
     def get_english_movie_name(film) -> str:
