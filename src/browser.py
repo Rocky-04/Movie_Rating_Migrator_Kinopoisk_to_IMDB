@@ -140,15 +140,15 @@ class VirtualBrowser:
             rating_data[self.kinopoisk_ids[i]] = {}
             rating_data[self.kinopoisk_ids[i]]['user_ratings'] = self.user_ratings[i]
             rating_data[self.kinopoisk_ids[i]]['imdb_ids'] = self.imdb_ids[i]
-            if self.english_movie_names[i]:
+            if self.english_movie_names[i] and self.english_movie_names[i] != "\u00a0":
                 rating_data[self.kinopoisk_ids[i]]['movie_name'] = self.english_movie_names[i]
             else:
                 rating_data[self.kinopoisk_ids[i]]['movie_name'] = self.russian_movie_names[i]
 
         # Save dictionary to JSON file
         file = self.path_file + '/rating_data.json'
-        with open(file, 'w') as fp:
-            json.dump(rating_data, fp)
+        with open(file, 'w', encoding='utf-8') as fp:
+            json.dump(rating_data, fp, ensure_ascii=False)
         print('Ratings successfully saved to JSON file.')
 
     def launch_kinopoisk_browser(self) -> None:
@@ -323,7 +323,7 @@ class VirtualBrowser:
             api_response = self.fetch_film_data_from_api_kinobd(kinopoisk_id)
             if api_response is not None:
                 return api_response['data'][0]['name_russian']
-        except (KeyError, IndexError, TypeError):
+        except Exception:
             pass
 
         # 3. Try to retrieve the russian name using the kinopoiskapiunofficial API
@@ -331,7 +331,7 @@ class VirtualBrowser:
             api_response = self.fetch_film_data_from_api_unofficial(kinopoisk_id)
             if api_response is not None:
                 return api_response['nameRu']
-        except (KeyError, IndexError, TypeError):
+        except Exception:
             pass
 
         # If the russian name could not be found, return None
