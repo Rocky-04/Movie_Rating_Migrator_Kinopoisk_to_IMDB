@@ -14,6 +14,9 @@ from src.browser import VirtualBrowser
 
 
 class UiMainWindow(object):
+    ICON_PATH = '../img/icon.ico'
+    DEFAULT_PATH = '../data'
+
     def __init__(self):
         # Initialize instance variables
         self.user_id = None
@@ -36,7 +39,7 @@ class UiMainWindow(object):
         main_window.setMouseTracking(False)
         main_window.setStyleSheet("color: rgb(180, 142, 255);\n"
                                   "selection-background-color: rgb(221, 221, 221);")
-        main_window.setWindowIcon(QtGui.QIcon('../img/icon.ico'))
+        main_window.setWindowIcon(QtGui.QIcon(self.ICON_PATH))
         main_window.setIconSize(QtCore.QSize(100, 100))
         self.centralwidget = QtWidgets.QWidget(main_window)
         self.centralwidget.setStyleSheet("background-color: rgb(230, 230, 230);\n"
@@ -206,7 +209,7 @@ class UiMainWindow(object):
             massage.setIcon(QMessageBox.Information)
         massage.setText(text)
         massage.setStandardButtons(QMessageBox.Ok)
-        massage.setWindowIcon(QtGui.QIcon('../img/icon.ico'))
+        massage.setWindowIcon(QtGui.QIcon(self.ICON_PATH))
         timer = QTimer(massage)
         timer.setInterval(self.timer)
         timer.setSingleShot(True)
@@ -267,7 +270,7 @@ class UiMainWindow(object):
         Removes the trailing '/' from the selected path if it exists.
         If a path is selected, changes the color of the button_send_path button.
         """
-        path = QFileDialog.getExistingDirectory(directory='../data')
+        path = QFileDialog.getExistingDirectory(directory=self.DEFAULT_PATH)
         if len(path) > 0 and not path.isdigit():
             self.button_send_path.setStyleSheet("background-color: rgb(80, 255, 115);\n"
                                                 "color: rgb(0, 0, 0);\n")
@@ -392,7 +395,7 @@ class UiMainWindow(object):
             "оценки будут скачаны заново с Кинопоиск и проставляться тоже будут заново")
         massage.setText(text)
         massage.setIcon(QMessageBox.Question)
-        massage.setWindowIcon(QtGui.QIcon('../img/icon.ico'))
+        massage.setWindowIcon(QtGui.QIcon(self.ICON_PATH))
         massage.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         massage.buttonClicked.connect(handle_popup_response)
         massage.exec_()

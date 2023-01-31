@@ -24,6 +24,7 @@ from data.API import USER_AGENT_HEADER
 class VirtualBrowser:
     DRIVER_PATH = '../chrome_driver/chromedriver.exe'
     TOP_MOVIES_PATH = '../data/top_movies_25000.json'
+    SESSION_KINOPOISK_PATH = '../data/session_kinopoisk'
     URL_KINOPOISK = 'https://www.kinopoisk.ru/user/'
 
     def __init__(self, user_id: int, path_file: str = '') -> None:
@@ -181,7 +182,7 @@ class VirtualBrowser:
         self.browser.get(url)
 
         # Load the cookies
-        with open('../data/session_kinopoisk', 'rb') as f:
+        with open(self.SESSION_KINOPOISK_PATH, 'rb') as f:
             cookies = pickle.load(f)
             for cookie in cookies:
                 self.browser.add_cookie(cookie)
@@ -657,8 +658,7 @@ class VirtualBrowser:
             api = requests.get(API_KINOBD + kinopoisk_id, headers=USER_AGENT_HEADER)
             api = json.loads(api.content.decode('utf-8'))
             return api
-        except (ConnectionError, json.JSONDecodeError) as error:
-            print(error)
+        except Exception:
             return None
 
     @staticmethod
