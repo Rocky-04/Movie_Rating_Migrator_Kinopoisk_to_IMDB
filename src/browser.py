@@ -484,13 +484,14 @@ class VirtualBrowser:
 
             # Select the desired rating
             element = Wait(self.browser, 1).until(ec.presence_of_element_located((By.XPATH, grade)))
-            time.sleep(0.4)
+            time.sleep(0.2)
 
             ActionChains(self.browser).move_to_element(element).click().perform()
             # Click the rating button to save the rating
             self.browser.find_element(By.XPATH, ('/html/body/div[4]/div[2]/div/div[2]/div/div[2]/'
                                                  'div[2]/button')).click()
-            time.sleep(0.2)
+
+            time.sleep(0.5)
             return True
         except Exception:
             return False
