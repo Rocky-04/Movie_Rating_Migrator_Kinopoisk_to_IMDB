@@ -42,14 +42,14 @@
 
 Вы получите оценки в файле формате Excel. В файле будут следующие колонки:
 
-russian_movie_name
-english_movie_name
-user_rating
-week
-user_rating_count
-kinopoisk_id
-kinopoisk_rating
-imdb_id
+- russian_movie_name
+- english_movie_name
+- user_rating
+- week
+- user_rating_count
+- kinopoisk_id
+- kinopoisk_rating
+- imdb_id
 
 Также будет сформирован файл в формате JSON, созданный для дальнейшего переноса оценок на IMDB.
 
