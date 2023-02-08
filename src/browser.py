@@ -90,15 +90,16 @@ class VirtualBrowser:
         """
 
         # Get the number of ratings
+        Wait(self.browser, 600).until(
+            ec.url_contains(f'{self.URL_KINOPOISK}{self.user_id}/votes/list'))
         soup = BeautifulSoup(self.browser.page_source, 'lxml')
         num_ratings = int(soup.find('div', class_='pagesFromTo').text.split(' из ')[1])
-
         # Parse ratings
         for i in range(1, (num_ratings // 200) + 2):
             try:
                 url = f'{self.URL_KINOPOISK}{self.user_id}/votes/list/ord/date/page/{i}/#list'
                 print(f'Retrieving page {i} - {url}')
-                time.sleep(2)
+                time.sleep(1)
                 self.browser.get(url)
                 Wait(self.browser, 600).until(
                     ec.url_contains(f'{self.URL_KINOPOISK}{self.user_id}/votes/list'))
@@ -108,7 +109,7 @@ class VirtualBrowser:
                 url = (f'{self.URL_KINOPOISK}{self.user_id}/'
                        f'votes/list/ord/date/perpage/200/page/{i}/#list')
                 print(f'Retrieving page {i} - {url}')
-                time.sleep(2)
+                time.sleep(1)
                 self.browser.get(url)
                 Wait(self.browser, 600).until(
                     ec.url_contains(f'{self.URL_KINOPOISK}{self.user_id}/votes/list'))
@@ -182,10 +183,11 @@ class VirtualBrowser:
         self.browser.get(url)
 
         # Load the cookies
-        with open(self.SESSION_KINOPOISK_PATH, 'rb') as f:
-            cookies = pickle.load(f)
-            for cookie in cookies:
-                self.browser.add_cookie(cookie)
+        if os.path.exists(self.SESSION_KINOPOISK_PATH):
+            with open(self.SESSION_KINOPOISK_PATH, 'rb') as f:
+                cookies = pickle.load(f)
+                for cookie in cookies:
+                    self.browser.add_cookie(cookie)
 
         # Navigate to the url again after loading the cookies
         self.browser.get(url)
