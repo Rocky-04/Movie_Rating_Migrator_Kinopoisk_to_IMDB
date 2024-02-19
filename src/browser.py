@@ -476,24 +476,24 @@ class VirtualBrowser:
         :param user_ratings: the rating to be applied to the movie (1-10)
         :return: True if the rating was successfully applied, False otherwise
         """
-        grade = (f'/html/body/div[4]/div[2]/div/div[2]/div/div[2]/div[2]/div/div[2]/'
-                 f'button[{int(user_ratings)}]')
+        star_rate_button = (f'//*[@class="ipc-starbar__rating"]/button[{int(user_ratings)}]')
+        open_rating_modal_button = ('//*[@data-testid="hero-rating-bar__user-rating"]/button[1]')
+        submit_rate_button = ('//button[contains(@class, "ipc-rating-prompt__rate-button")]')
+        wait = Wait(self.browser, 1)
         try:
             # Click the rating button
-            self.browser.find_element(By.XPATH, (
-                '/html/body/div[2]/main/div/section[1]/section/div[3]/section/'
-                'section/div[2]/div[2]/div/div[2]/button')).click()
+            self.browser.find_element(By.XPATH, open_rating_modal_button).click()
 
             # Select the desired rating
-            element = Wait(self.browser, 1).until(ec.presence_of_element_located((By.XPATH, grade)))
+            element = wait.until(ec.visibility_of_element_located((By.XPATH, star_rate_button)))
             time.sleep(0.2)
 
             ActionChains(self.browser).move_to_element(element).click().perform()
             # Click the rating button to save the rating
-            self.browser.find_element(By.XPATH, ('/html/body/div[4]/div[2]/div/div[2]/div/div[2]/'
-                                                 'div[2]/button')).click()
 
+            self.browser.find_element(By.XPATH, submit_rate_button).click()
             time.sleep(0.5)
+
             return True
         except Exception:
             return False
@@ -506,14 +506,11 @@ class VirtualBrowser:
 
         :return: True if the rating was successfully applied, False otherwise
         """
-        grade = ('/html/body/div[2]/main/div/section[1]/section/div[3]/section/section/div[2]/'
-                 'div[2]/div/div[2]/button/div/div/div[2]/div/span')
+        grade = ('//*[@data-testid="hero-rating-bar__user-rating__score"]/span')
         try:
             # Check if the current rating matches the expected rating
             element = Wait(self.browser, 1).until(ec.presence_of_element_located((By.XPATH, grade)))
             if element.text == user_ratings:
-                return True
-            elif self.browser.find_element(By.XPATH, grade).text == user_ratings:
                 return True
             else:
                 return False
