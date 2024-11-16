@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import pickle
 import time
 from typing import Union
@@ -9,7 +10,8 @@ import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver import ActionChains
-from selenium.webdriver import Chrome
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait as Wait
@@ -20,6 +22,10 @@ from data.API import API_UNOFFICIAL_KEY_HEADER
 from data.API import KEYS_KINOPOISK_API_UNOFFICIAL
 from data.API import USER_AGENT_HEADER
 
+from src.get_chromedriver import get_chromedriver_path, platform_system_name
+
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    os.chdir(sys._MEIPASS)
 
 class VirtualBrowser:
     DRIVER_PATH = 'chrome_driver/chromedriver.exe'
@@ -34,6 +40,8 @@ class VirtualBrowser:
         :param user_id: the ID of the user whose ratings will be parsed
         :param path_file: (optional) the file path where the ratings will be saved
         """
+        self.driver_path = self.determine_chromedriver_path()
+
         self.user_id = user_id
         self.path_file = path_file
 
@@ -58,10 +66,25 @@ class VirtualBrowser:
         self.top_movies = {}
 
         # Initialize the Chrome browser
-        self.browser = Chrome(self.DRIVER_PATH)
+        self.browser = webdriver.Chrome(
+            service=Service(executable_path=self.DRIVER_PATH)
+        )
 
         # Initialize list of errors
         self.errors = []
+
+    def determine_chromedriver_path(self):
+        """
+        Determine the path to the Chromedriver executable based on the operating system.
+        """
+        chromedriver_path = get_chromedriver_path()
+
+        if chromedriver_path is None:
+            raise FileNotFoundError(
+                f"chromedriver для {platform_system_name} не найден. Пожалуйста, установите соответствующий chromedriver."
+            )
+        else:
+            self.DRIVER_PATH = chromedriver_path
 
     def parse_user_ratings(self) -> None:
         """
@@ -165,7 +188,7 @@ class VirtualBrowser:
                f'/votes/list/ord/date/perpage/200/page/1/#list')
 
         # Set up Chrome options
-        options = webdriver.ChromeOptions()
+        options = Options()
         options.add_argument(
             "--disable-blink-features=AutomationControlled")
         options.add_argument('--no-sandbox')
@@ -177,7 +200,10 @@ class VirtualBrowser:
         options.add_argument("--disable-extensions")
 
         # Initialize the Chrome browser with the specified options
-        self.browser = Chrome(self.DRIVER_PATH, options=options)
+        self.browser = webdriver.Chrome(
+            service=Service(executable_path=self.DRIVER_PATH),
+            options=options
+        )
 
         # Navigate to the specified url
         self.browser.get(url)
@@ -209,7 +235,7 @@ class VirtualBrowser:
             pickle.dump(self.browser.get_cookies(), open('session_imdb', 'wb'))
 
         # Set up Chrome options
-        options = webdriver.ChromeOptions()
+        options = Options()
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--disable-setuid-sandbox")
         options.add_argument("--disable-webgl")
@@ -227,7 +253,10 @@ class VirtualBrowser:
         options.add_experimental_option("prefs", prefs)
         options.headless = False  # Show the window or not
         options.add_argument("--window-size=1400,1000")
-        self.browser = Chrome(self.DRIVER_PATH, options=options)
+        self.browser = webdriver.Chrome(
+            service=Service(executable_path=self.DRIVER_PATH),
+            options=options
+        )
         self.browser.get('https://www.imdb.com')
 
         # Load the cookies
