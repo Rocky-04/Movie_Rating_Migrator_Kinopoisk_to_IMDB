@@ -9,7 +9,7 @@ from src.browser import VirtualBrowser
 
 def test_setup_ui_sets_window_size(qtbot):
     ui, main_window, qtbot = qtbot
-    assert main_window.size() == QtCore.QSize(481, 568)
+    assert main_window.size() == QtCore.QSize(480, 650)
 
 
 def test_setup_ui_sets_window_font(qtbot):
