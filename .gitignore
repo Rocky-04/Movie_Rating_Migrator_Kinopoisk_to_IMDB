@@ -1,5 +1,5 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache
@@ -31,6 +31,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+chromedriver/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -160,3 +161,9 @@ cython_debug/
 *.pyc
 setup.cfg
 django_cache
+.vscode/
+
+
+*.rar
+*.zip
+*.7zip

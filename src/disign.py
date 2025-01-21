@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -11,6 +12,10 @@ from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QWidget
 
 from src.browser import VirtualBrowser
+from src.get_chromedriver import download_chromedriver, get_chromedriver_path
+
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    os.chdir(sys._MEIPASS)
 
 
 class UiMainWindow(object):
@@ -31,7 +36,7 @@ class UiMainWindow(object):
         main_window (QMainWindow): The main window object.
         """
         main_window.setObjectName("main_window")
-        main_window.resize(481, 568)
+        main_window.resize(480, 650)
         font = QtGui.QFont()
         font.setFamily("Yu Gothic UI")
         font.setPointSize(20)
@@ -53,6 +58,13 @@ class UiMainWindow(object):
         self.setup_button_send_path(self.centralwidget)
         self.setup_plain_text_edit(self.centralwidget)
         self.setup_button_enter_id(self.centralwidget)
+
+        self.chromedriver_path = get_chromedriver_path()
+        if self.chromedriver_path:
+            print(f"Chromedriver найден по пути: {self.chromedriver_path}")
+        else:
+            print("Chromedriver не найден. Показывается кнопка для загрузки chromedriver.")
+            self.setup_button_download_chromedriver(self.centralwidget)
 
         main_window.setCentralWidget(self.centralwidget)
         QtCore.QMetaObject.connectSlotsByName(main_window)
@@ -175,6 +187,47 @@ class UiMainWindow(object):
                                            "")
         self.button_enter_id.setObjectName("button_enter_id")
         self.button_enter_id.setText("Нажмите когда укажите ID")
+
+    def download_chromedriver(self) -> None:
+        """
+        Download and install chromedriver.
+        """
+        if self.chromedriver_path:
+            self.print_massage("Chromedriver уже установлен")
+            return
+        else:
+            try:
+                chromedriver_path = download_chromedriver()
+                if chromedriver_path:
+                    self.print_massage(f"Chromedriver установлен по пути: {chromedriver_path}")
+                    self.chromedriver_path = chromedriver_path
+                    self.button_download_chromedriver.hide()
+                else:
+                    self.print_massage("Не удалось загрузить chromedriver", side="error")
+            except Exception as e:
+                self.print_massage(f"Ошибка при загрузке chromedriver: {e}", side="error")
+
+
+    def setup_button_download_chromedriver(self, parent_widget):
+        """
+        Setup the button for downloading chromedriver.
+
+        Parameters:
+        parent_widget (QWidget): The parent widget object.
+        """
+        self.button_download_chromedriver = QtWidgets.QPushButton(parent_widget)
+        self.button_download_chromedriver.setGeometry(QtCore.QRect(20, 560, 450, 80))
+        font = QtGui.QFont()
+        font.setFamily("Segoe UI")
+        font.setPointSize(15)
+        self.button_download_chromedriver.setFont(font)
+        self.button_download_chromedriver.setStyleSheet("background-color: rgb(0, 255, 127);\n"
+                                                        "color: rgb(0, 0, 0);\n"
+                                                        "\n"
+                                                        "")
+        self.button_download_chromedriver.setObjectName("button_download_chromedriver")
+        self.button_download_chromedriver.setText("Загрузить chromedriver")
+        self.button_download_chromedriver.clicked.connect(self.download_chromedriver)
 
     def setup_plain_text_edit(self, central_widget: QWidget) -> None:
         """
@@ -304,22 +357,23 @@ class UiMainWindow(object):
         self.print_massage(text)
         for _ in range(3):
             try:
-                self.browser = VirtualBrowser(user_id, path_file).parse_user_ratings()
+                self.browser = VirtualBrowser(user_id, path_file)
+                self.browser.parse_user_ratings()
                 text = f'''Парсинг успешно завершен. Файлы сохранены в папку {path_file}'''
                 self.print_massage(text)
                 return
             except Exception as e:
-                print(e)
-                continue
+                if isinstance(e, FileNotFoundError):
+                    self.print_massage(text=f"{e}", side='error')
+                    return
+                text = ("Произошла ошибка при парсинге данных.<br><br>"
+                        f"{e}<br><br>"
+                        "Проверьте открываться ли у Вас сайт Кинопоиска, возможно нужен VPN.<br>"
+                        "Проверьте правильность ID пользователя.<br>"
+                        )
+                self.print_massage(text=text, side='error')
+                return
 
-        text = ("Произошла ошибка при парсинге данных.<br><br>"
-                "Проверьте открываться ли у Вас сайт Кинопоиска, возможно нужен VPN.<br>"
-                "Проверьте правильность ID пользователя.<br>"
-                "Проверьте драйвера браузера, загрузите последнюю версию chromedriver для "
-                "своей системы <a href='https://chromedriver.chromium.org/downloads'>здесь."
-                " </a> Замените chromedriver в папке chrome_driver вашей загрузкой.<br>"
-                )
-        self.print_massage(text=text, side='error')
 
     def rate_movies_on_imdb(self) -> None:
         """
@@ -359,7 +413,8 @@ class UiMainWindow(object):
         self.print_massage(text)
 
         try:
-            self.browser = VirtualBrowser(user_id, path_file).start_rate_imdb()
+            self.browser = VirtualBrowser(user_id, path_file)
+            self.browser.start_rate_imdb()
 
             text = f"""Файл с ошибками (если они были) сохранен в папку {path_file}"""
             self.print_massage(text)
