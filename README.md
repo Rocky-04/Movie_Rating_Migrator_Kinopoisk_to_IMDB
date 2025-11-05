@@ -1,49 +1,60 @@
-﻿# Movie Rating Migrator: Kinopoisk -> IMDB
+# Movie Rating Migrator: Kinopoisk → IMDB
 
-## Программа для скачивания личных оценок с Кинопоиска в формате Excel, а также для переноса оценок с Кинопоиска на IMDB.
+> **⚠️ PROJECT IS NO LONGER MAINTAINED**
+>
+> This project is archived and no longer actively maintained. The code is provided as-is for reference purposes only.
 
-<p align="center">
+## About
 
-  <img  src="https://i.ibb.co/R9XL3F3/Screenshot-41.png" alt="Screenshot-41">
-</p>
-
-## Для использования программы понадобится:
-1) Google Chrome.
-2) Важно что бы у Вас открывался сайт Кинопоиска. (Возможно понадобиться установить VPN).
-3) Программа разрабатывалась для Windows. На других ОС не тестировалась.
-
-
-## Для использования программы через архив:
-1) Cкачайте файл - "__Movie_Rating_Migrator_Kinopoisk_to_IMDB.rar", и распакуйте его.
-2) Запустите файл - "__Movie_Rating_Migrator_Kinopoisk_to_IMDB.exe".
-3) Введите ID Кинопоиска в которого нужно спарсить оценки, и укажите путь для сохранения файлов.
-4) Следуйте инструкциям программы.
-
-
-## FAQ:
-### Как узнать ID пользователя Кинопоиск?
-
-Узнать ID вы можете узнать во вкладке оценки.
+A tool for downloading personal ratings from Kinopoisk in Excel format and migrating ratings from Kinopoisk to IMDB.
 
 <p align="center">
-
-  <img  src="https://i.postimg.cc/ZKtTRCqV/Screenshot-1.png" alt="Screenshot-41">
+  <img src="https://i.ibb.co/R9XL3F3/Screenshot-41.png" alt="Screenshot-41">
 </p>
 
+## Download Pre-built Application
 
-### Что делать, если не открывается браузер?
+**You can download a ready-to-use version of the application from this branch:**
 
-Чаще всего ошибка версии драйверов. Попробуйте обновить драйвера браузера в программе.
-1) Загрузите последнюю версию chromedriver для своей системы [здесь](https://chromedriver.chromium.org/downloads).
-2) Замените chromedriver.exe в папке chrome_driver вашей загрузкой.
+🔗 **Branch with .rar file:** [`claude/revert-to-commit-6c9744f-011CUq1LS6nREcVrt8Cy8Eg8`](https://github.com/Rocky-04/Movie_Rating_Migrator_Kinopoisk_to_IMDB/tree/claude/revert-to-commit-6c9744f-011CUq1LS6nREcVrt8Cy8Eg8)
 
-Проверьте что бы у вас открывался сайт Кинопоиск.
-В Украине он заблокирован. Любой ВПН поможет это исправить.
+📦 **Direct download:** [`__Movie_Rating_Migrator_Kinopoisk_to_IMDB.rar`](https://github.com/Rocky-04/Movie_Rating_Migrator_Kinopoisk_to_IMDB/raw/claude/revert-to-commit-6c9744f-011CUq1LS6nREcVrt8Cy8Eg8/__Movie_Rating_Migrator_Kinopoisk_to_IMDB.rar)
+
+## Requirements
+
+1. Google Chrome browser
+2. Access to Kinopoisk website (VPN may be required in some regions)
+3. The application was developed for Windows (not tested on other operating systems)
+
+## How to Use (Pre-built Version)
+
+1. Download the file `__Movie_Rating_Migrator_Kinopoisk_to_IMDB.rar` from the link above and extract it
+2. Run `__Movie_Rating_Migrator_Kinopoisk_to_IMDB.exe`
+3. Enter the Kinopoisk user ID whose ratings you want to parse, and specify the path to save files
+4. Follow the program instructions
+
+## FAQ
+
+### How to find Kinopoisk user ID?
+
+You can find the ID in the ratings tab.
 
 
-### В каком формате я получу оценки после парсинга по кинопоиску?
+<p align="center">
+  <img src="https://i.postimg.cc/ZKtTRCqV/Screenshot-1.png" alt="Screenshot-41">
+</p>
 
-Вы получите оценки в файле формате Excel. В файле будут следующие колонки:
+### What if the browser doesn't open?
+
+Most often this is due to driver version mismatch. Try updating the browser drivers:
+1. Download the latest chromedriver version for your system [here](https://chromedriver.chromium.org/downloads)
+2. Replace chromedriver.exe in the chrome_driver folder with your download
+
+Make sure Kinopoisk website opens in your browser. In Ukraine it's blocked - any VPN will help fix this.
+
+### What format will I receive ratings in after parsing?
+
+You will receive ratings in Excel format. The file will contain the following columns:
 
 - russian_movie_name
 - english_movie_name
@@ -54,33 +65,22 @@
 - kinopoisk_rating
 - imdb_id
 
-Также будет сформирован файл в формате JSON, созданный для дальнейшего переноса оценок на IMDB.
+A JSON format file will also be generated for further transfer of ratings to IMDB.
 
+### Will all ratings be transferred to IMDB?
 
-### Все ли оценки перености на IMDB?
+All ratings for which there is an IMDB code will be transferred. If a movie is not transferred, it will be added to an error file (created at the end of the rating transfer).
 
-Переносятся все оценки, для которых есть код imdb. Если фильм не будет перенесен, то этот фильм будет добавлен в файл с ошибками (будет создан в конце переноса оценок).
+### What if the rating transfer fails?
 
-### Что делать, если при переносе оценок произошел сбой?
+The program remembers its working status. Launch the rating transfer again and it will continue from where it left off (it will also try to transfer movies that failed to transfer again).
 
+Do not restart rating parsing, as the process will start from the beginning.
 
-Программа запоминает статус работы. Запустите перенос оценок еще раз и он продолжится с места окончания (также еще раз попытается перенести фильмы, которые не удалось перенести).
-Не запускайте парсинг оценок заново, так как процесс начнется с начала.
+### How many movies are usually transferred successfully?
 
+From practice, 99%. The rest end up in the error file.
 
-### Сколько фильмов обычно переносится успешно?
+## License
 
-Из практики 99%. Остальные попадают в файл с ошибками.
-
-### Запуск программы в режиме отладки
-
-```bash
-python main.py
-```
-
-### Сборка программы
-
-```bash
-pyinstaller --onefile --add-data "data:data" main.py
-```
-Программа будет сохранена в папке dist.
+This project includes a LICENSE file. Please refer to it for usage terms.
