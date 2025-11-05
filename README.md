@@ -39,6 +39,7 @@ A tool for downloading personal ratings from Kinopoisk in Excel format and migra
 
 You can find the ID in the ratings tab.
 
+
 <p align="center">
   <img src="https://i.postimg.cc/ZKtTRCqV/Screenshot-1.png" alt="Screenshot-41">
 </p>
