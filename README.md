@@ -16,9 +16,7 @@ A tool for downloading personal ratings from Kinopoisk in Excel format and migra
 
 **You can download a ready-to-use version of the application from this branch:**
 
-🔗 **Branch with .rar file:** [`claude/revert-to-commit-6c9744f-011CUq1LS6nREcVrt8Cy8Eg8`](https://github.com/Rocky-04/Movie_Rating_Migrator_Kinopoisk_to_IMDB/tree/claude/revert-to-commit-6c9744f-011CUq1LS6nREcVrt8Cy8Eg8)
-
-📦 **Direct download:** [`__Movie_Rating_Migrator_Kinopoisk_to_IMDB.rar`](https://github.com/Rocky-04/Movie_Rating_Migrator_Kinopoisk_to_IMDB/raw/claude/revert-to-commit-6c9744f-011CUq1LS6nREcVrt8Cy8Eg8/__Movie_Rating_Migrator_Kinopoisk_to_IMDB.rar)
+🔗 **Branch with .rar file:** [`claude/revert-to-commit-6c9744f-011CUq1LS6nREcVrt8Cy8Eg8`](https://github.com/Rocky-04/Movie_Rating_Migrator_Kinopoisk_to_IMDB/blob/6c9744f54885d7c2017c81d8c43ad475b79c3503/__Movie_Rating_Migrator_Kinopoisk_to_IMDB.rar)
 
 ## Requirements
 
